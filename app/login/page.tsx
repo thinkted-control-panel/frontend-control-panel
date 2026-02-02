@@ -21,7 +21,7 @@ export default function Login() {
       <div className="flex flex-col w-1/2 h-full justify-center items-center gap-5 px-10">
         <div className="w-full max-w-md flex flex-col gap-2 items-center">
           <Image src={logo} alt="Logo Control Panel" />
-          <h1>Ecossistima</h1>
+          <h1>Ecossistema</h1>
           <h5>Seja bem-vindo</h5>{" "}
         </div>
         <form className="flex flex-col gap-3 w-full max-w-md items-center">
