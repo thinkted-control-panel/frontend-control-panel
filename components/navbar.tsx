@@ -1,364 +1,70 @@
-"use client"
-import { useState } from 'react';
-// import svgPaths from '../imports/svg-7i6zbro897';
+"use client";
 
-interface NavBarProps {
-  onNavigateToThinkLibAprovacoes?: () => void;
-  onNavigateToThinkLibUsuarios?: () => void;
-  onNavigateToThinkLibItens?: () => void;
-  onNavigateToThinkLibAuditoria?: () => void;
-}
+import Image from "next/image";
+import { Bell, ChevronDown } from "lucide-react";
 
-export default function NavBar({ 
-  onNavigateToThinkLibAprovacoes,
-  onNavigateToThinkLibUsuarios,
-  onNavigateToThinkLibItens,
-  onNavigateToThinkLibAuditoria
-}: NavBarProps) {
-  const [isThinkLibExpanded, setIsThinkLibExpanded] = useState(false);
+import logoEcosistema from "../imports/logo.svg";
+import avatarMock from "../imports/avatar-mock.svg";
 
-  const handleThinkLibClick = () => {
-    setIsThinkLibExpanded(!isThinkLibExpanded);
-  };
-
+export default function TopBar() {
   return (
-    <div className="absolute bg-white bottom-[-12px] content-stretch flex h-[726px] items-start justify-center left-0 w-[200px]" data-name="NavBar - tes">
-      <div aria-hidden="true" className="absolute border-[#cdd0da] border-r border-solid inset-0 pointer-events-none" />
-      
-      <div className="content-stretch flex flex-col items-start relative shrink-0 w-[177px]">
-        {/* Geral */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="home">
-                      {/* <path d={svgPaths.p1dc9c0c0} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="1.5" /> */}
-                    </g>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Geral</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <header className="w-full h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-6">
+      {/* ===== LEFT (Logo + Nome sistema) ===== */}
+      <div className="flex items-center gap-3">
+        <Image
+          src={logoEcosistema}
+          alt="Logo"
+          width={20}
+          height={20}
+          className="object-contain"
+          priority
+        />
 
-        {/* Dashboard */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="home"></g>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Dashboard</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <span className="text-lg font-semibold text-[#142E82]">
+          Ecossistema
+        </span>
+      </div>
 
-        {/* Auditoria */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="home"></g>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Auditoria</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* ===== RIGHT (Ações + Usuário) ===== */}
+      <div className="flex items-center gap-6">
+        {/* Notificações */}
+        <button
+          type="button"
+          className="text-gray-600 hover:text-[#142E82] transition-colors"
+          aria-label="Notificações"
+        >
+          <Bell size={20} />
+        </button>
 
-        {/* Itens */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="home"></g>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Itens</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Suporte */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="home"></g>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Suporte</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Divisor */}
+        <div className="w-px h-6 bg-[#E5E7EB]" />
 
         {/* Usuário */}
-        <div className="content-stretch flex items-start relative shrink-0 w-[176px]">
-          <div className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[12px] py-[10px] relative rounded-[8px] shrink-0 w-[176px]">
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[16px]">
-                <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                  <g id="user">
-                    <rect fill="var(--fill-0, #FEFEFE)" height="16" rx="8" width="16" />
-                    <g id="Vector">
-                      {/* <path d={svgPaths.p32c7fa00} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="1.2" />
-                      <path d={svgPaths.p29a85e00} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="1.2" /> */}
-                    </g>
-                  </g>
-                </svg>
-              </div>
-              <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                <p className="css-4hzbpn leading-[normal]">Usuário</p>
-              </div>
-            </div>
-            <div className="relative shrink-0 size-[16px]">
-              <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                <g id="chevron-down">
-                  {/* <path d={svgPaths.p1cd8c200} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" /> */}
-                </g>
-              </svg>
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="flex items-center gap-3 hover:bg-gray-50 px-2 py-1 rounded-lg transition"
+        >
+          <Image
+            src={avatarMock}
+            alt="Avatar"
+            width={30}
+            height={30}
+            className="rounded-full object-cover"
+          />
 
-        {/* Divider */}
-        <div className="h-[20px] relative shrink-0 w-[177px]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 177 20">
-            <g id="Frame 5686">
-              <line stroke="var(--stroke-0, #CDD0DA)" x1="16.5" x2="160.5" y1="9.5" y2="9.5" />
-            </g>
-          </svg>
-        </div>
+          <div className="flex flex-col items-start text-sm leading-tight">
+            <span className="font-medium text-[#11204F]">
+              Marcela P.
+            </span>
 
-        {/* Sistemas */}
-        <div className="bg-white h-[40px] relative rounded-[8px] shrink-0 w-full">
-          <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex gap-[12px] items-center pl-[12px] py-[10px] relative size-full">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                <div className="relative shrink-0 size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g clipPath="url(#clip0_1_1575)">
-                      <g id="Vector">
-                        {/* <path d={svgPaths.p14e7ee00} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="1.2" />
-                        <path d={svgPaths.p3ca15c00} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="1.2" /> */}
-                      </g>
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_1_1575">
-                        <rect fill="white" height="16" width="16" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </div>
-                <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                  <p className="css-4hzbpn leading-[normal]">Sistemas</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* GameTEd */}
-        <div className="content-stretch flex h-[40px] items-start relative shrink-0 w-full">
-          <div className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[12px] py-[10px] relative rounded-[8px] shrink-0 w-[176px]">
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[16px]">
-                <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                  <g id="home"></g>
-                </svg>
-              </div>
-              <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                <p className="css-4hzbpn leading-[normal]">GameTEd</p>
-              </div>
-            </div>
-            <div className="relative shrink-0 size-[16px]">
-              <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                <g id="chevron-down">
-                  {/* <path d={svgPaths.p1cd8c200} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" /> */}
-                </g>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* ThinkLib - Expandable */}
-        <div className="bg-white content-stretch flex flex-col items-start relative shrink-0 w-full">
-          {/* ThinkLib Header */}
-          <div 
-            className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[12px] pr-[24px] py-[16px] relative rounded-[8px] shrink-0 w-[176px]"
-          >
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[16px]">
-                <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                  <g id="home"></g>
-                </svg>
-              </div>
-              <div className={`flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] w-[90px] ${isThinkLibExpanded ? 'text-[#1d43be]' : 'text-[rgba(13,12,11,0.8)]'}`}>
-                <p className="css-4hzbpn leading-[normal]">ThinkLib</p>
-              </div>
-            </div>
-            <div 
-              className="flex items-center justify-center relative shrink-0 cursor-pointer"
-              onClick={handleThinkLibClick}
-            >
-              <div className={`flex-none transition-transform ${isThinkLibExpanded ? 'rotate-[180deg]' : ''}`}>
-                <div className="relative size-[16px]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                    <g id="chevron-down">
-                      {/* <path d={svgPaths.p1cd8c200} stroke={isThinkLibExpanded ? 'var(--stroke-0, #1D43BE)' : 'var(--stroke-0, #0D0C0B)'} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={isThinkLibExpanded ? '1' : '0.8'} /> */}
-                    </g>
-                  </svg>
-                </div>
-              </div>
-            </div>
+            <span className="text-xs text-[#5D657F]">
+              Super admin
+            </span>
           </div>
 
-          {/* ThinkLib Subitems */}
-          {isThinkLibExpanded && (
-            <>
-              {/* Aprovações */}
-              <div 
-                className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[30px] py-[10px] relative rounded-[8px] shrink-0 w-[176px] cursor-pointer hover:bg-[#f8fafe]"
-                onClick={onNavigateToThinkLibAprovacoes}
-              >
-                <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                  <div className="relative shrink-0 size-[16px]">
-                    <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                      <g id="home"></g>
-                    </svg>
-                  </div>
-                  <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                    <p className="css-4hzbpn leading-[normal]">Aprovações</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Usuários */}
-              <div 
-                className="bg-white content-stretch flex gap-[12px] h-[41px] items-center overflow-clip pl-[30px] py-[10px] relative rounded-[8px] shrink-0 w-[176px] cursor-pointer hover:bg-[#f8fafe]"
-                onClick={onNavigateToThinkLibUsuarios}
-              >
-                <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                  <div className="relative shrink-0 size-[16px]">
-                    <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                      <g id="home"></g>
-                    </svg>
-                  </div>
-                  <div className="css-g0mm18 flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)]">
-                    <p className="css-ew64yg leading-[normal]">Usuários</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Itens */}
-              <div 
-                className="bg-white content-stretch flex gap-[12px] h-[41px] items-center overflow-clip pl-[30px] py-[10px] relative rounded-[8px] shrink-0 w-[176px] cursor-pointer hover:bg-[#f8fafe]"
-                onClick={onNavigateToThinkLibItens}
-              >
-                <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                  <div className="relative shrink-0 size-[16px]">
-                    <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                      <g id="home"></g>
-                    </svg>
-                  </div>
-                  <div className="css-g0mm18 flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)]">
-                    <p className="css-ew64yg leading-[normal]">Itens</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Auditoria */}
-              <div 
-                className="bg-white content-stretch flex gap-[12px] h-[41px] items-center overflow-clip pl-[30px] py-[10px] relative rounded-[8px] shrink-0 w-[176px] cursor-pointer hover:bg-[#f8fafe]"
-                onClick={onNavigateToThinkLibAuditoria}
-              >
-                <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                  <div className="relative shrink-0 size-[16px]">
-                    <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                      <g id="home"></g>
-                    </svg>
-                  </div>
-                  <div className="css-g0mm18 flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)]">
-                    <p className="css-ew64yg leading-[normal]">Auditoria</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ThinkTest */}
-        <div className="content-stretch flex items-start relative shrink-0 w-full">
-          <div className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[12px] py-[10px] relative rounded-[8px] shrink-0 w-[176px]">
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[16px]">
-                <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                  <g id="home"></g>
-                </svg>
-              </div>
-              <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                <p className="css-4hzbpn leading-[normal]">ThinkTest</p>
-              </div>
-            </div>
-            <div className="relative shrink-0 size-[16px]">
-              <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                <g id="chevron-down">
-                  {/* <path d={svgPaths.p1cd8c200} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" /> */}
-                </g>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* GLBoard */}
-        <div className="content-stretch flex items-start relative shrink-0 w-full">
-          <div className="bg-white content-stretch flex gap-[12px] h-[40px] items-center overflow-clip pl-[12px] py-[10px] relative rounded-[8px] shrink-0 w-[176px]">
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[16px]">
-                <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                  <g id="home"></g>
-                </svg>
-              </div>
-              <div className="flex flex-col font-['Poppins:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(13,12,11,0.8)] w-[90px]">
-                <p className="css-4hzbpn leading-[normal]">GLBoard</p>
-              </div>
-            </div>
-            <div className="relative shrink-0 size-[16px]">
-              <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                <g id="chevron-down">
-                  {/* <path d={svgPaths.p1cd8c200} stroke="var(--stroke-0, #0D0C0B)" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" /> */}
-                </g>
-              </svg>
-            </div>
-          </div>
-        </div>
+          <ChevronDown size={16} className="text-gray-500" />
+        </button>
       </div>
-    </div>
+    </header>
   );
 }
