@@ -41,7 +41,7 @@ export default function Login() {
         </div>
         <form className="flex flex-col gap-3 w-full max-w-md items-center">
           <CustomTextInput
-            {...register("username")}
+            {...register("email")}
             type="email"
             label="Email"
             placeholder="Insira seu e-mail"
