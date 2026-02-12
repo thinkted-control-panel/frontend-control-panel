@@ -4,6 +4,7 @@ import "./globals.css";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import LayoutWrapper from "@/components/LayoutWrapper";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,8 +37,11 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased`}
       >
+
         <LayoutWrapper>
+          <AuthProvider>
           {children}
+          </AuthProvider>
         </LayoutWrapper>
         <ToastContainer
           position="top-right"
