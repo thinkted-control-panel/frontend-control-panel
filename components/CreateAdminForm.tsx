@@ -1,55 +1,79 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'react-toastify';
+import { registerSchema, type RegisterFormData } from '@/schemas/registerSchema';
+import { register as registerUser } from '@/services/RegisterService';
+import IRegister from '@/interfaces/IRegister';
+import { formatDate, formatPhone } from '@/utils/masks';
 
 interface CreateAdminFormProps {
   onClose: () => void;
 }
 
+const buildPayload = (data: RegisterFormData): IRegister => {
+  const [firstName, ...rest] = data.nome.trim().split(/\s+/);
+
+  let birthday = new Date();
+  if (data.dataNascimento) {
+    const [day, month, year] = data.dataNascimento.split('/').map(Number);
+    birthday = new Date(year, month - 1, day);
+  }
+
+  return {
+    username: data.email.split('@')[0],
+    email: data.email.trim(),
+    password: data.senha,
+    firstName,
+    lastName: rest.join(' '),
+    birthday,
+    institution: data.instituicao ?? '',
+    objective: data.objetivo ?? '',
+    isActive: true,
+  };
+};
+
 export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
-  
-  // Estados dos campos
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [dataNascimento, setDataNascimento] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [instituicao, setInstituicao] = useState('');
-  const [senha, setSenha] = useState('aB3$fjwmd');
-  const [exigirTrocaSenha, setExigirTrocaSenha] = useState(true);
-  const [objetivo, setObjetivo] = useState('');
-  
-  // Tipo de usuário
-  const [tipos, setTipos] = useState({
-    estudante: false,
-    professor: false,
-    pesquisador: false,
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      nome: '',
+      email: '',
+      dataNascimento: '',
+      telefone: '',
+      instituicao: '',
+      senha: 'aB3$fjwmd',
+      exigirTrocaSenha: true,
+      objetivo: '',
+      tipos: { estudante: false, professor: false, pesquisador: false },
+      permissoes: {
+        gameClass: false,
+        gameTed: false,
+        glBoard: false,
+        thinkLib: false,
+        thinktest: false,
+        thinkTedSystem: false,
+        todos: false,
+      },
+    },
   });
 
-  // Permissões
-  const [permissoes, setPermissoes] = useState({
-    gameClass: false,
-    gameTed: false,
-    glBoard: false,
-    thinkLib: false,
-    thinktest: false,
-    thinkTedSystem: false,
-    todos: false,
-  });
-
-  // Erros
-  const [errors, setErrors] = useState<{ email?: string }>({});
-
-  const handleEmailChange = (val: string) => {
-    setEmail(val);
-    if (val.toLowerCase().trim() === 'mariana.souza@exemplo.com') {
-      setErrors({ email: 'E-mail já existe' });
-    } else {
-      setErrors({});
-    }
-  };
+  const permissoes = watch('permissoes');
 
   const handleToggleTodos = (checked: boolean) => {
-    setPermissoes({
+    setValue('permissoes', {
       gameClass: checked,
       gameTed: checked,
       glBoard: checked,
@@ -60,28 +84,38 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
     });
   };
 
-  const handleTogglePermissao = (key: keyof typeof permissoes, checked: boolean) => {
-    setPermissoes(prev => {
-      const next = { ...prev, [key]: checked };
-      // Se todos estiverem marcados individualmente, marca "todos"
-      const allSelected = next.gameClass && next.gameTed && next.glBoard && next.thinkLib && next.thinktest && next.thinkTedSystem;
-      next.todos = allSelected;
-      return next;
-    });
+  const handleTogglePermissao = (
+    key: keyof RegisterFormData['permissoes'],
+    checked: boolean,
+  ) => {
+    const next = { ...permissoes, [key]: checked };
+    // Se todos estiverem marcados individualmente, marca "todos"
+    next.todos =
+      next.gameClass &&
+      next.gameTed &&
+      next.glBoard &&
+      next.thinkLib &&
+      next.thinktest &&
+      next.thinkTedSystem;
+    setValue('permissoes', next);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.toLowerCase().trim() === 'mariana.souza@exemplo.com') {
-      setErrors({ email: 'E-mail já existe' });
-      return;
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      await registerUser(buildPayload(data));
+      toast.success('Usuário criado com sucesso!');
+      onClose();
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        setError('email', { message: 'E-mail já existe' });
+        return;
+      }
+      toast.error('Erro ao criar usuário. Tente novamente.');
     }
-    // Salvar mockado com sucesso e voltar
-    onClose();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full bg-white flex flex-col gap-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full bg-white flex flex-col gap-8">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
         <h1 className="font-poppins font-medium text-[22px] text-[#142E82] tracking-wide antialiased">
@@ -110,32 +144,38 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
             </label>
             <input
               type="text"
-              required
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              {...register('nome')}
               placeholder="Insira o nome do usuário"
-              className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+              className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                errors.nome
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                  : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+              }`}
             />
+            {errors.nome && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.nome.message}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-              Email
+              Email*
             </label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => handleEmailChange(e.target.value)}
+              {...register('email')}
               placeholder="mariana.souza@exemplo.com"
               className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 transition ${
-                errors.email 
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900' 
+                errors.email
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
                   : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
               }`}
             />
             {errors.email && (
               <span className="text-xs text-red-500 font-poppins mt-0.5">
-                {errors.email}
+                {errors.email.message}
               </span>
             )}
           </div>
@@ -145,28 +185,54 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-              Data de nascimento
+              Data de nascimento*
             </label>
             <input
               type="text"
-              value={dataNascimento}
-              onChange={(e) => setDataNascimento(e.target.value)}
-              placeholder="00/00/00"
-              className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+              {...register('dataNascimento')}
+              onChange={(e) =>
+                setValue('dataNascimento', formatDate(e.target.value), {
+                  shouldValidate: true,
+                })
+              }
+              placeholder="DD/MM/AAAA"
+              className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                errors.dataNascimento
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                  : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+              }`}
             />
+            {errors.dataNascimento && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.dataNascimento.message}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-              Telefone
+              Telefone*
             </label>
             <input
               type="text"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
+              {...register('telefone')}
+              onChange={(e) =>
+                setValue('telefone', formatPhone(e.target.value), {
+                  shouldValidate: true,
+                })
+              }
               placeholder="(00) 0 0000-0000"
-              className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+              className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                errors.telefone
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                  : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+              }`}
             />
+            {errors.telefone && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.telefone.message}
+              </span>
+            )}
           </div>
         </div>
 
@@ -174,15 +240,23 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-              Instituição de vínculo
+              Instituição de vínculo*
             </label>
             <input
               type="text"
-              value={instituicao}
-              onChange={(e) => setInstituicao(e.target.value)}
+              {...register('instituicao')}
               placeholder="Insira a instituição do usuário"
-              className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+              className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                errors.instituicao
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                  : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+              }`}
             />
+            {errors.instituicao && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.instituicao.message}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -192,11 +266,13 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
             <div className="relative w-full">
               <input
                 type={showPassword ? 'text' : 'password'}
-                required
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
+                {...register('senha')}
                 placeholder="aB3$fjwmd"
-                className="w-full px-4 py-2.5 pr-11 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                  errors.senha
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
               <button
                 type="button"
@@ -206,13 +282,17 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            
+            {errors.senha && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.senha.message}
+              </span>
+            )}
+
             {/* Checkbox Exigir troca de senha */}
             <label className="flex items-center gap-2 mt-1 select-none cursor-pointer">
               <input
                 type="checkbox"
-                checked={exigirTrocaSenha}
-                onChange={(e) => setExigirTrocaSenha(e.target.checked)}
+                {...register('exigirTrocaSenha')}
                 className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
               />
               <span className="text-xs text-[#5D657F] font-poppins font-normal">
@@ -225,15 +305,23 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
         {/* Objetivo de uso */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-            Objetivo de uso
+            Objetivo de uso*
           </label>
           <textarea
             rows={3}
-            value={objetivo}
-            onChange={(e) => setObjetivo(e.target.value)}
+            {...register('objetivo')}
             placeholder="Descreva o objetivo de uso deste usuário"
-            className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none"
+            className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition resize-none ${
+              errors.objetivo
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+            }`}
           />
+          {errors.objetivo && (
+            <span className="text-xs text-red-500 font-poppins mt-0.5">
+              {errors.objetivo.message}
+            </span>
+          )}
         </div>
 
         {/* Tipo de usuário */}
@@ -242,27 +330,30 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
             Tipo de usuário
           </span>
           <div className="flex flex-col gap-2">
-            {Object.keys(tipos).map((key) => {
-              const k = key as keyof typeof tipos;
-              const labels: Record<string, string> = {
-                estudante: 'Estudante',
-                professor: 'Professor',
-                pesquisador: 'Pesquisador',
-              };
-              return (
-                <label key={k} className="flex items-center gap-2.5 select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={tipos[k]}
-                    onChange={(e) => setTipos(prev => ({ ...prev, [k]: e.target.checked }))}
-                    className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
-                  />
-                  <span className="text-sm text-gray-700 font-poppins">
-                    {labels[k]}
-                  </span>
-                </label>
-              );
-            })}
+            <label className="flex items-center gap-2.5 select-none cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('tipos.estudante')}
+                className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+              />
+              <span className="text-sm text-gray-700 font-poppins">Estudante</span>
+            </label>
+            <label className="flex items-center gap-2.5 select-none cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('tipos.professor')}
+                className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+              />
+              <span className="text-sm text-gray-700 font-poppins">Professor</span>
+            </label>
+            <label className="flex items-center gap-2.5 select-none cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('tipos.pesquisador')}
+                className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+              />
+              <span className="text-sm text-gray-700 font-poppins">Pesquisador</span>
+            </label>
           </div>
         </div>
       </div>
@@ -363,9 +454,10 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
       <div className="flex justify-center mt-6">
         <button
           type="submit"
-          className="bg-[#142E82] text-white px-10 py-3 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm shadow-sm"
+          disabled={isSubmitting}
+          className="bg-[#142E82] text-white px-10 py-3 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Salvar
+          {isSubmitting ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
     </form>

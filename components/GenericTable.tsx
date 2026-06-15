@@ -12,8 +12,8 @@ import PaginationItem from "@mui/material/PaginationItem";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
-interface User {
-  id: number;
+export interface TableUser {
+  id: string;
   name: string;
   email: string;
   systems: string[];
@@ -21,103 +21,11 @@ interface User {
 }
 
 interface UserTableProps {
+  users: TableUser[];
   searchTerm?: string;
-  onEditUser?: (user: User) => void;
+  isLoading?: boolean;
+  onEditUser?: (user: TableUser) => void;
 }
-
-const mockedUsers: User[] = [
-  {
-    id: 1,
-    name: "Mariana Alves Souza",
-    email: "mariana.souza@exemplo.com",
-    systems: ["GLBoard"],
-    status: "Ativo",
-  },
-  {
-    id: 2,
-    name: "Marcela pessoa",
-    email: "marcela.pessoa@exemplo.com",
-    systems: ["Painel"],
-    status: "Ativo",
-  },
-  {
-    id: 3,
-    name: "Fernanda Pires",
-    email: "fernanda.pires@exemplo.com",
-    systems: ["Painel"],
-    status: "Ativo",
-  },
-  {
-    id: 4,
-    name: "Rafaela Melo",
-    email: "rafa.melo@exemplo.com",
-    systems: ["GTE", "GLB"],
-    status: "Ativo",
-  },
-  {
-    id: 5,
-    name: "Cristiana Pedrosa",
-    email: "cristiana.pedrosa@exemplo.com",
-    systems: ["ThinkTest"],
-    status: "Ativo",
-  },
-  {
-    id: 6,
-    name: "Valdenei Junior",
-    email: "val.junior@exemplo.com",
-    systems: ["Lib", "GLB"],
-    status: "Suspenso",
-  },
-  {
-    id: 7,
-    name: "Fabrizio Honda",
-    email: "fabi@exemplo.com",
-    systems: ["GLB", "Lib", "Test"],
-    status: "Ativo",
-  },
-  {
-    id: 8,
-    name: "Gustavo Carvalho Santos",
-    email: "gustavo.santos@exemplo.com",
-    systems: ["GLBoard"],
-    status: "Ativo",
-  },
-  {
-    id: 9,
-    name: "Larissa Teixeira Gomes",
-    email: "larissa.gomes@exemplo.com",
-    systems: ["ThinkLib"],
-    status: "Ativo",
-  },
-  {
-    id: 10,
-    name: "Henrique Furtado",
-    email: "henry@exemplo.com",
-    systems: ["GLBoard"],
-    status: "Suspenso",
-  },
-  {
-    id: 11,
-    name: "Handryo Laudinei",
-    email: "h_laudinei@exemplo.com",
-    systems: ["GameTED"],
-    status: "Ativo",
-  },
-  {
-    id: 12,
-    name: "Ana Beatriz Silva",
-    email: "ana.beatriz@exemplo.com",
-    systems: ["Painel"],
-    status: "Ativo",
-  },
-  {
-    id: 13,
-    name: "Carlos Eduardo",
-    email: "cadu@exemplo.com",
-    systems: ["GTE"],
-    status: "Suspenso",
-  },
-];
 
 const getSystemBadgeClass = (system: string): string => {
   switch (system.toLowerCase()) {
@@ -141,11 +49,16 @@ const getSystemBadgeClass = (system: string): string => {
   }
 };
 
-export const GenericTable: React.FC<UserTableProps> = ({ searchTerm = "", onEditUser }) => {
+export const GenericTable: React.FC<UserTableProps> = ({
+  users,
+  searchTerm = "",
+  isLoading = false,
+  onEditUser,
+}) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 11;
 
-  const filteredUsers = mockedUsers.filter((user) => {
+  const filteredUsers = users.filter((user) => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return true;
     return (
@@ -217,15 +130,21 @@ export const GenericTable: React.FC<UserTableProps> = ({ searchTerm = "", onEdit
           </thead>
 
           <tbody className="divide-y-2 divide-[#F8FAFE] text-sm text-[#0D0C0B] font-poppins bg-white">
-            {currentItems.length > 0 ? (
-              currentItems.map((user) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-[#8E95A5]">
+                  Carregando usuários...
+                </td>
+              </tr>
+            ) : currentItems.length > 0 ? (
+              currentItems.map((user, idx) => (
                 <tr
                   key={user.id}
                   onClick={() => onEditUser?.(user)}
                   className="hover:bg-[#F8FAFE]/50 transition-colors bg-white cursor-pointer"
                 >
                   <td className="py-4 pl-4 pr-4 text-[#8E95A5] font-normal">
-                    {user.id}
+                    {indexOfFirstItem + idx + 1}
                   </td>
                   <td className="py-4 px-4 font-normal text-[#0D0C0B]">
                     {user.name}

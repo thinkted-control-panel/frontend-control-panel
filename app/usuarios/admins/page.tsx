@@ -1,16 +1,45 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { PageTitle } from '@/components/PageTitle';
 import { SearchInput } from '@/components/SearchInput';
-import { GenericTable } from '@/components/GenericTable';
+import { GenericTable, type TableUser } from '@/components/GenericTable';
 import { CreateAdminForm } from '@/components/CreateAdminForm';
 import { EditAdminForm } from '@/components/EditAdminForm';
+import { listUsers } from '@/services/UserService';
+import { IUser } from '@/interfaces/IUser';
+
+const mapToTableUser = (user: IUser): TableUser => ({
+  id: user.id,
+  name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.username,
+  email: user.email,
+  systems: user.permissionPolicies ?? [],
+  status: user.isActive ? 'Ativo' : 'Suspenso',
+});
 
 export default function AdminsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<TableUser | null>(null);
+  const [users, setUsers] = useState<TableUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await listUsers();
+      setUsers(data.map(mapToTableUser));
+    } catch (error) {
+      toast.error('Erro ao carregar usuários. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   if (showCreateForm) {
     return (
@@ -23,13 +52,13 @@ export default function AdminsPage() {
   if (editingUser) {
     return (
       <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white">
-        <EditAdminForm 
-          user={editingUser} 
-          onClose={() => setEditingUser(null)} 
-          onSave={(updatedUser) => {
-            // Em uma app real atualizaria a API/lista, aqui apenas fecha
+        <EditAdminForm
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSave={() => {
             setEditingUser(null);
-          }} 
+            fetchUsers();
+          }}
         />
       </div>
     );
@@ -64,7 +93,12 @@ export default function AdminsPage() {
 
       {/* Tabela de Usuários */}
       <div className="mt-2">
-        <GenericTable searchTerm={searchTerm} onEditUser={setEditingUser} />
+        <GenericTable
+          users={users}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          onEditUser={setEditingUser}
+        />
       </div>
     </div>
   );

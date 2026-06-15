@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'react-toastify';
 import { StatusModal } from './StatusModal';
+import { registerSchema, type RegisterFormData } from '@/schemas/registerSchema';
+import { formatDate, formatPhone } from '@/utils/masks';
+import { getUser, updateUser } from '@/services/UserService';
+import { IUpdateUser } from '@/interfaces/IUpdateUser';
 
 interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   systems: string[];
@@ -16,39 +25,113 @@ interface EditAdminFormProps {
   onSave: (updatedUser: User) => void;
 }
 
+type Permissoes = RegisterFormData['permissoes'];
+
+// Converte as policies vindas da API nos checkboxes de permissões
+const buildPermissoesFromPolicies = (policies: string[]): Permissoes => {
+  const gameClass = policies.includes('GameClass');
+  const gameTed = policies.includes('GameTED') || policies.includes('GTE');
+  const glBoard = policies.includes('GLBoard') || policies.includes('GLB');
+  const thinkLib = policies.includes('ThinkLib') || policies.includes('Lib');
+  const thinktest = policies.includes('ThinkTest') || policies.includes('Test');
+  const thinkTedSystem = policies.includes('ThinkTEd');
+  return {
+    gameClass,
+    gameTed,
+    glBoard,
+    thinkLib,
+    thinktest,
+    thinkTedSystem,
+    todos:
+      gameClass && gameTed && glBoard && thinkLib && thinktest && thinkTedSystem,
+  };
+};
+
+// Converte os checkboxes de permissões de volta em policies para a API
+const buildPolicies = (permissoes: Permissoes): string[] => {
+  const policies: string[] = [];
+  if (permissoes.gameClass) policies.push('GameClass');
+  if (permissoes.gameTed) policies.push('GameTED');
+  if (permissoes.glBoard) policies.push('GLBoard');
+  if (permissoes.thinkLib) policies.push('ThinkLib');
+  if (permissoes.thinktest) policies.push('ThinkTest');
+  if (permissoes.thinkTedSystem) policies.push('ThinkTEd');
+  return policies;
+};
+
+// Formata uma data (Date ou ISO string) para DD/MM/AAAA
+const formatBirthday = (value: Date | string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${date.getFullYear()}`;
+};
+
 export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onSave }) => {
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [nome, setNome] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
-  const [dataNascimento, setDataNascimento] = useState('15/08/1995');
-  const [telefone, setTelefone] = useState('(11) 9 9999-9999'); 
-  const [instituicao, setInstituicao] = useState('Instituição Exemplo'); 
-  const [senha, setSenha] = useState('aB3$fjwmd');
-  const [exigirTrocaSenha, setExigirTrocaSenha] = useState(true);
-  const [objetivo, setObjetivo] = useState('Ela quer trabalhar mais!');
-  
-  const [tipos, setTipos] = useState({
-    estudante: true,
-    professor: false,
-    pesquisador: false,
-  });
-
-  const [permissoes, setPermissoes] = useState({
-    gameClass: false,
-    gameTed: user.systems.includes('GameTED') || user.systems.includes('GTE'),
-    glBoard: user.systems.includes('GLBoard') || user.systems.includes('GLB'),
-    thinkLib: user.systems.includes('ThinkLib') || user.systems.includes('Lib'),
-    thinktest: user.systems.includes('ThinkTest') || user.systems.includes('Test'),
-    thinkTedSystem: false,
-    todos: false,
-  });
-
   const [status, setStatus] = useState<'Ativo' | 'Suspenso'>(user.status);
 
   const [showModal, setShowModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<'Ativo' | 'Suspenso' | null>(null);
   const [justificativa, setJustificativa] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting, dirtyFields },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      nome: user.name,
+      email: user.email,
+      dataNascimento: '',
+      telefone: '',
+      instituicao: '',
+      senha: 'aB3$fjwmd',
+      exigirTrocaSenha: true,
+      objetivo: '',
+      tipos: { estudante: false, professor: false, pesquisador: false },
+      permissoes: buildPermissoesFromPolicies(user.systems),
+    },
+  });
+
+  const permissoes = watch('permissoes');
+
+  // Busca os dados completos do usuário para preencher o formulário
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const full = await getUser(user.id);
+        if (!active) return;
+        reset({
+          nome:
+            `${full.firstName ?? ''} ${full.lastName ?? ''}`.trim() ||
+            full.username,
+          email: full.email,
+          dataNascimento: formatBirthday(full.birthday),
+          telefone: '',
+          instituicao: full.institution ?? '',
+          senha: 'aB3$fjwmd',
+          exigirTrocaSenha: true,
+          objetivo: full.objective ?? '',
+          tipos: { estudante: false, professor: false, pesquisador: false },
+          permissoes: buildPermissoesFromPolicies(full.permissionPolicies ?? []),
+        });
+        setStatus(full.isActive ? 'Ativo' : 'Suspenso');
+      } catch {
+        toast.error('Erro ao carregar os dados do usuário.');
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user.id, reset]);
 
   const handleToggleStatus = () => {
     const nextStatus = status === 'Ativo' ? 'Suspenso' : 'Ativo';
@@ -66,7 +149,7 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
   };
 
   const handleToggleTodos = (checked: boolean) => {
-    setPermissoes({
+    setValue('permissoes', {
       gameClass: checked,
       gameTed: checked,
       glBoard: checked,
@@ -77,39 +160,62 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
     });
   };
 
-  const handleTogglePermissao = (key: keyof typeof permissoes, checked: boolean) => {
-    setPermissoes(prev => {
-      const next = { ...prev, [key]: checked };
-      const allSelected = next.gameClass && next.gameTed && next.glBoard && next.thinkLib && next.thinktest && next.thinkTedSystem;
-      next.todos = allSelected;
-      return next;
-    });
+  const handleTogglePermissao = (key: keyof Permissoes, checked: boolean) => {
+    const next = { ...permissoes, [key]: checked };
+    next.todos =
+      next.gameClass &&
+      next.gameTed &&
+      next.glBoard &&
+      next.thinkLib &&
+      next.thinktest &&
+      next.thinkTedSystem;
+    setValue('permissoes', next);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const activeSystems: string[] = [];
-    if (permissoes.glBoard) activeSystems.push('GLBoard');
-    else if (user.systems.includes('Painel')) activeSystems.push('Painel');
+  const onSubmit = async (data: RegisterFormData) => {
+    const [firstName, ...rest] = data.nome.trim().split(/\s+/);
+    const [day, month, year] = data.dataNascimento.split('/').map(Number);
 
-    if (permissoes.gameTed) activeSystems.push('GameTED');
-    if (permissoes.thinkLib) activeSystems.push('ThinkLib');
-    if (permissoes.thinktest) activeSystems.push('ThinkTest');
+    const payload: IUpdateUser = {
+      email: data.email.trim(),
+      firstName,
+      lastName: rest.join(' '),
+      birthday: new Date(year, month - 1, day),
+      institution: data.instituicao,
+      objective: data.objetivo,
+      isActive: status === 'Ativo',
+      permissionPolicies: buildPolicies(data.permissoes),
+    };
 
-    onSave({
-      ...user,
-      name: nome,
-      email: email,
-      status: status,
-      systems: activeSystems.length > 0 ? activeSystems : [user.systems[0] || 'GLBoard'],
-    });
+    // Só envia a senha se ela foi alterada
+    if (dirtyFields.senha) {
+      payload.password = data.senha;
+    }
+
+    try {
+      const updated = await updateUser(user.id, payload);
+      toast.success('Usuário atualizado com sucesso!');
+      onSave({
+        id: user.id,
+        name: `${updated.firstName ?? ''} ${updated.lastName ?? ''}`.trim(),
+        email: updated.email,
+        systems: updated.permissionPolicies ?? [],
+        status: updated.isActive ? 'Ativo' : 'Suspenso',
+      });
+      onClose();
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        setError('email', { message: 'E-mail já existe' });
+        return;
+      }
+      toast.error('Erro ao atualizar usuário. Tente novamente.');
+    }
   };
 
   return (
     <div className="relative w-full bg-white">
-      <form onSubmit={handleSubmit} className="w-full bg-white flex flex-col gap-8">
-        
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full bg-white flex flex-col gap-8">
+
         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
           <div className="flex items-center gap-3">
             <h1 className="font-poppins font-medium text-[22px] text-[#142E82] tracking-wide antialiased">
@@ -125,7 +231,7 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
               </span>
             )}
           </div>
-          
+
           <button
             type="button"
             onClick={onClose}
@@ -147,68 +253,117 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
               </label>
               <input
                 type="text"
-                required
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
+                {...register('nome')}
                 placeholder="Insira o nome do usuário"
-                className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                  errors.nome
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
+              {errors.nome && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.nome.message}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-                Email
+                Email*
               </label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 placeholder="mariana.souza@exemplo.com"
-                className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 transition ${
+                  errors.email
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
+              {errors.email && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.email.message}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-                Data de nascimento
+                Data de nascimento*
               </label>
               <input
                 type="text"
-                value={dataNascimento}
-                onChange={(e) => setDataNascimento(e.target.value)}
-                placeholder="00/00/00"
-                className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                {...register('dataNascimento')}
+                onChange={(e) =>
+                  setValue('dataNascimento', formatDate(e.target.value), {
+                    shouldValidate: true,
+                  })
+                }
+                placeholder="DD/MM/AAAA"
+                className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                  errors.dataNascimento
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
+              {errors.dataNascimento && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.dataNascimento.message}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-                Telefone
+                Telefone*
               </label>
               <input
                 type="text"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                {...register('telefone')}
+                onChange={(e) =>
+                  setValue('telefone', formatPhone(e.target.value), {
+                    shouldValidate: true,
+                  })
+                }
                 placeholder="(00) 0 0000-0000"
-                className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                  errors.telefone
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
+              {errors.telefone && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.telefone.message}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-                Instituição de vínculo
+                Instituição de vínculo*
               </label>
               <input
                 type="text"
-                value={instituicao}
-                onChange={(e) => setInstituicao(e.target.value)}
+                {...register('instituicao')}
                 placeholder="Insira a instituição do usuário"
-                className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                  errors.instituicao
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                    : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                }`}
               />
+              {errors.instituicao && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.instituicao.message}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -218,11 +373,13 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
               <div className="relative w-full">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  required
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
+                  {...register('senha')}
                   placeholder="aB3$fjwmd"
-                  className="w-full px-4 py-2.5 pr-11 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition"
+                  className={`w-full px-4 py-2.5 pr-11 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition ${
+                    errors.senha
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                      : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+                  }`}
                 />
                 <button
                   type="button"
@@ -232,12 +389,16 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              
+              {errors.senha && (
+                <span className="text-xs text-red-500 font-poppins mt-0.5">
+                  {errors.senha.message}
+                </span>
+              )}
+
               <label className="flex items-center gap-2 mt-1 select-none cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={exigirTrocaSenha}
-                  onChange={(e) => setExigirTrocaSenha(e.target.checked)}
+                  {...register('exigirTrocaSenha')}
                   className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
                 />
                 <span className="text-xs text-[#5D657F] font-poppins font-normal">
@@ -249,15 +410,23 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-[#0D0C0B] font-poppins">
-              Objetivo de uso
+              Objetivo de uso*
             </label>
             <textarea
               rows={3}
-              value={objetivo}
-              onChange={(e) => setObjetivo(e.target.value)}
+              {...register('objetivo')}
               placeholder="Descreva o objetivo de uso deste usuário"
-              className="w-full px-4 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none"
+              className={`w-full px-4 py-2.5 text-sm text-gray-900 border rounded-[8px] focus:outline-none focus:ring-1 placeholder-gray-400 transition resize-none ${
+                errors.objetivo
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500 text-red-900'
+                  : 'border-gray-200 focus:border-blue-900 focus:ring-blue-900'
+              }`}
             />
+            {errors.objetivo && (
+              <span className="text-xs text-red-500 font-poppins mt-0.5">
+                {errors.objetivo.message}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -265,27 +434,30 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
               Tipo de usuário
             </span>
             <div className="flex flex-col gap-2">
-              {Object.keys(tipos).map((key) => {
-                const k = key as keyof typeof tipos;
-                const labels: Record<string, string> = {
-                  estudante: 'Estudante',
-                  professor: 'Professor',
-                  pesquisador: 'Pesquisador',
-                };
-                return (
-                  <label key={k} className="flex items-center gap-2.5 select-none cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={tipos[k]}
-                      onChange={(e) => setTipos(prev => ({ ...prev, [k]: e.target.checked }))}
-                      className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
-                    />
-                    <span className="text-sm text-gray-700 font-poppins">
-                      {labels[k]}
-                    </span>
-                  </label>
-                );
-              })}
+              <label className="flex items-center gap-2.5 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register('tipos.estudante')}
+                  className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+                />
+                <span className="text-sm text-gray-700 font-poppins">Estudante</span>
+              </label>
+              <label className="flex items-center gap-2.5 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register('tipos.professor')}
+                  className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+                />
+                <span className="text-sm text-gray-700 font-poppins">Professor</span>
+              </label>
+              <label className="flex items-center gap-2.5 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register('tipos.pesquisador')}
+                  className="w-4 h-4 rounded text-blue-900 border-gray-300 focus:ring-blue-900"
+                />
+                <span className="text-sm text-gray-700 font-poppins">Pesquisador</span>
+              </label>
             </div>
           </div>
         </div>
@@ -382,7 +554,7 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
               <span className="text-xs text-[#8E95A5] font-poppins font-normal">
                 Clique para alterar o status
               </span>
-              
+
               {/* Toggle Switch */}
               <div className="flex items-center gap-3">
                 <button
@@ -414,12 +586,13 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
           >
             Voltar
           </button>
-          
+
           <button
             type="submit"
-            className="bg-[#142E82] text-white px-10 py-3 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm shadow-sm"
+            disabled={isSubmitting}
+            className="bg-[#142E82] text-white px-10 py-3 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Salvar
+            {isSubmitting ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>
