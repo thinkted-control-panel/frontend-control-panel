@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import TopBar from "./navbar";
-import SideBar from "./sidebar";
+import SideBar, { ActiveKey } from "./sidebar";
 
 export default function LayoutWrapper({
   children,
@@ -10,22 +10,39 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isLoginPage = pathname === "/login";
 
   if (isLoginPage) {
     return <>{children}</>;
   }
 
+  // Mapear rota para chave ativa no sidebar
+  let activeKey: ActiveKey | null = null;
+  if (pathname === "/" || pathname === "/dashboard") {
+    activeKey = "dashboard";
+  } else if (pathname === "/usuarios/admins") {
+    activeKey = "geral_usuario_admins";
+  }
+
+  const handleNavigate = (key: ActiveKey) => {
+    if (key === "dashboard") {
+      router.push("/");
+    } else if (key === "geral_usuario_admins") {
+      router.push("/usuarios/admins");
+    }
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="shrink-0">
-        <SideBar />
-      </div>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <TopBar />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <TopBar />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="shrink-0">
+          <SideBar activeKey={activeKey} onNavigate={handleNavigate} />
+        </div>
 
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-white">
           {children}
         </main>
       </div>

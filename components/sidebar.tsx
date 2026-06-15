@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home, User, Settings, ChevronDown, ChevronUp } from "lucide-react";
 
 export type ActiveKey =
@@ -65,7 +65,15 @@ function ChildItem({
   onClick?: () => void;
   indentClass?: string;
 }) {
-  const textClass = isActive ? "text-[#1D43BE]" : "text-[rgba(13,12,11,0.8)]";
+  const textClass = isActive ? "text-[#1D43BE] font-medium" : "text-[rgba(13,12,11,0.8)]";
+  
+  const padClass = isActive
+    ? (indentClass === "pl-14" ? "pl-[52px]" : "pl-[36px]")
+    : indentClass;
+
+  const bgClass = isActive 
+    ? "bg-[#F3F6FF] border-l-4 border-[#1D43BE] rounded-r-lg rounded-l-none" 
+    : "rounded-lg hover:bg-[#f8fafe]";
 
   return (
     <button
@@ -74,15 +82,14 @@ function ChildItem({
       className={[
         "w-full",
         "h-10",
-        indentClass,
+        padClass,
         "pr-4",
-        "rounded-lg",
         "flex items-center justify-start",
-        "hover:bg-[#f8fafe]",
-        "transition-colors",
+        bgClass,
+        "transition-all duration-200",
       ].join(" ")}
     >
-      <span className={["text-sm font-normal", textClass].join(" ")}>{label}</span>
+      <span className={["text-sm", textClass].join(" ")}>{label}</span>
     </button>
   );
 }
@@ -130,6 +137,20 @@ function CollapsibleHeader({
 export default function SideBar({ activeKey = null, onNavigate, onToggleSection }: SideBarProps) {
   const [openSection, setOpenSection] = useState<OpenSection>(null);
 
+  useEffect(() => {
+    if (activeKey?.startsWith("geral_usuario")) {
+      setOpenSection("usuario");
+    } else if (activeKey?.startsWith("gameted")) {
+      setOpenSection("gameted");
+    } else if (activeKey?.startsWith("thinklib")) {
+      setOpenSection("thinklib");
+    } else if (activeKey?.startsWith("thinktest")) {
+      setOpenSection("thinktest");
+    } else if (activeKey?.startsWith("glboard")) {
+      setOpenSection("glboard");
+    }
+  }, [activeKey]);
+
   const isUsuarioOpen = openSection === "usuario";
   const isGameTEdOpen = openSection === "gameted";
   const isThinkLibOpen = openSection === "thinklib";
@@ -151,7 +172,7 @@ export default function SideBar({ activeKey = null, onNavigate, onToggleSection 
     : "text-[rgba(13,12,11,0.8)]";
 
   return (
-    <aside className="w-[200px] bg-white border-r border-[#CDD0DA] h-screen">
+    <aside className="w-[200px] bg-white border-r border-[#CDD0DA] h-full">
       <div className="px-3 py-3">
         <ParentTitle icon={<Home size={16} />} label="Geral" />
 
