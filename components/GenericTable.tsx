@@ -3,8 +3,6 @@ import {
   ArrowUpDown,
   Ban,
   Check,
-  Circle,
-  CircleDot,
   Filter,
 } from "lucide-react";
 import Pagination from "@mui/material/Pagination";
@@ -20,11 +18,24 @@ export interface TableUser {
   status: "Ativo" | "Suspenso";
 }
 
-interface UserTableProps {
-  users: TableUser[];
+export interface TableColumn<T> {
+  key: string;
+  header: string;
+  render?: (item: T, index: number) => React.ReactNode;
+  sortable?: boolean;
+  filterable?: boolean;
+  className?: string;
+}
+
+interface GenericTableProps<T> {
+  users?: TableUser[];
+  onEditUser?: (user: TableUser) => void;
+  data?: T[];
+  columns?: TableColumn<T>[];
+  onRowClick?: (item: T) => void;
   searchTerm?: string;
   isLoading?: boolean;
-  onEditUser?: (user: TableUser) => void;
+  itemsPerPage?: number;
 }
 
 const getSystemBadgeClass = (system: string): string => {
@@ -49,47 +60,114 @@ const getSystemBadgeClass = (system: string): string => {
   }
 };
 
-export const GenericTable: React.FC<UserTableProps> = ({
+export const GenericTable = <T,>({
   users,
+  onEditUser,
+  data,
+  columns,
+  onRowClick,
   searchTerm = "",
   isLoading = false,
-  onEditUser,
-}) => {
+  itemsPerPage = 11,
+}: GenericTableProps<T>) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 11;
 
-  const filteredUsers = users.filter((user) => {
+  const defaultUserColumns: TableColumn<TableUser>[] = [
+    {
+      key: "name",
+      header: "Nome",
+      sortable: true,
+      render: (user) => user.name,
+    },
+    {
+      key: "email",
+      header: "Email",
+      sortable: true,
+      render: (user) => user.email,
+      className: "text-[#5D657F]",
+    },
+    {
+      key: "systems",
+      header: "Sistemas",
+      filterable: true,
+      className: "w-1/4",
+      render: (user) => (
+        <div className="flex flex-wrap gap-2">
+          {user.systems.map((sys, idx) => (
+            <span
+              key={idx}
+              className={`px-3 py-1 text-xs font-medium rounded-[6px] ${getSystemBadgeClass(sys)}`}
+            >
+              {sys}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      filterable: true,
+      className: "w-36",
+      render: (user) =>
+        user.status === "Ativo" ? (
+          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#16A34A] bg-[#F0FDF4] rounded-full border border-[#DCFCE7]">
+            <Check size={12} strokeWidth={3} className="text-[#16A34A]" />
+            Ativo
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] rounded-full border border-[#FEF3C7]">
+            <Ban size={12} strokeWidth={3} className="text-[#D97706]" />
+            Suspenso
+          </span>
+        ),
+    },
+  ];
+
+  const finalColumns = (columns || (users ? defaultUserColumns : [])) as TableColumn<any>[];
+  const finalData = (data || users || []) as any[];
+
+  const filteredData = finalData.filter((item) => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return true;
-    return (
-      user.name.toLowerCase().includes(term) ||
-      user.email.toLowerCase().includes(term) ||
-      user.systems.some((sys) => sys.toLowerCase().includes(term)) ||
-      user.status.toLowerCase().includes(term)
-    );
+
+    return Object.keys(item).some((key) => {
+      const val = item[key];
+      if (val === null || val === undefined) return false;
+      if (typeof val === "string") {
+        return val.toLowerCase().includes(term);
+      }
+      if (typeof val === "number") {
+        return String(val).includes(term);
+      }
+      if (Array.isArray(val)) {
+        return val.some((subVal) => typeof subVal === "string" && subVal.toLowerCase().includes(term));
+      }
+      return false;
+    });
   });
 
-  const totalItems = filteredUsers.length;
+  const totalItems = filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-
   const activePage = currentPage > totalPages ? totalPages : currentPage;
 
   const indexOfLastItem = activePage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
-  const hasPagination = true;
-  const startResult = String(indexOfFirstItem + 1).padStart(2, "0");
-  const endResult = String(Math.min(indexOfLastItem, totalItems)).padStart(
-    2,
-    "0",
-  );
+  const startResult = String(totalItems === 0 ? 0 : indexOfFirstItem + 1).padStart(2, "0");
+  const endResult = String(Math.min(indexOfLastItem, totalItems)).padStart(2, "0");
   const totalResults = String(totalItems).padStart(2, "0");
+
+  const handleRowClick = (item: any) => {
+    if (onRowClick) {
+      onRowClick(item as T);
+    } else if (onEditUser && users) {
+      onEditUser(item as TableUser);
+    }
+  };
+
+  const colCount = finalColumns.length + 1;
 
   return (
     <div className="w-full bg-white mt-4">
@@ -102,93 +180,46 @@ export const GenericTable: React.FC<UserTableProps> = ({
                   Nº
                 </div>
               </th>
-              <th className="pb-4 py-3 px-4 text-[#5D657F] font-poppins">
-                <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
-                  Nome
-                  <ArrowUpDown className="w-4 h-4" />
-                </div>
-              </th>
-              <th className="pb-4 py-3 px-4 text-[#5D657F] font-poppins">
-                <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
-                  Email
-                  <ArrowUpDown className="w-4 h-4" />
-                </div>
-              </th>
-              <th className="pb-4 py-3 px-4 w-1/4 text-[#5D657F] font-poppins">
-                <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
-                  Sistemas
-                  <Filter className="w-4 h-4" />
-                </div>
-              </th>
-              <th className="pb-4 py-3 px-4 w-36 text-[#5D657F] font-poppins">
-                <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
-                  Status
-                  <Filter className="w-4 h-4" />
-                </div>
-              </th>
+              {finalColumns.map((col) => (
+                <th key={col.key} className={`pb-4 py-3 px-4 text-[#5D657F] font-poppins ${col.className || ""}`}>
+                  <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
+                    {col.header}
+                    {col.sortable && <ArrowUpDown className="w-4 h-4" />}
+                    {col.filterable && <Filter className="w-4 h-4" />}
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
 
           <tbody className="divide-y-2 divide-[#F8FAFE] text-sm text-[#0D0C0B] font-poppins bg-white">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-[#8E95A5]">
-                  Carregando usuários...
+                <td colSpan={colCount} className="py-8 text-center text-[#8E95A5]">
+                  Carregando...
                 </td>
               </tr>
             ) : currentItems.length > 0 ? (
-              currentItems.map((user, idx) => (
+              currentItems.map((item, idx) => (
                 <tr
-                  key={user.id}
-                  onClick={() => onEditUser?.(user)}
+                  key={item.id || idx}
+                  onClick={() => handleRowClick(item)}
                   className="hover:bg-[#F8FAFE]/50 transition-colors bg-white cursor-pointer"
                 >
                   <td className="py-4 pl-4 pr-4 text-[#8E95A5] font-normal">
                     {indexOfFirstItem + idx + 1}
                   </td>
-                  <td className="py-4 px-4 font-normal text-[#0D0C0B]">
-                    {user.name}
-                  </td>
-                  <td className="py-4 px-4 text-[#5D657F]">{user.email}</td>
-                  <td className="py-4 px-4">
-                    <div className="flex flex-wrap gap-2">
-                      {user.systems.map((sys, idx) => (
-                        <span
-                          key={idx}
-                          className={`px-3 py-1 text-xs font-medium rounded-[6px] ${getSystemBadgeClass(sys)}`}
-                        >
-                          {sys}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    {user.status === "Ativo" ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#16A34A] bg-[#F0FDF4] rounded-full border border-[#DCFCE7]">
-                        <Check
-                          size={12}
-                          strokeWidth={3}
-                          className="text-[#16A34A]"
-                        />
-                        Ativo
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] rounded-full border border-[#FEF3C7]">
-                        <Ban
-                          size={12}
-                          strokeWidth={3}
-                          className="text-[#D97706]"
-                        />
-                        Suspenso
-                      </span>
-                    )}
-                  </td>
+                  {finalColumns.map((col) => (
+                    <td key={col.key} className={`py-4 px-4 font-normal ${col.className || ""}`}>
+                      {col.render ? col.render(item, indexOfFirstItem + idx) : item[col.key]}
+                    </td>
+                  ))}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-[#8E95A5]">
-                  Nenhum usuário encontrado
+                <td colSpan={colCount} className="py-8 text-center text-[#8E95A5]">
+                  Nenhum registro encontrado
                 </td>
               </tr>
             )}
@@ -196,14 +227,14 @@ export const GenericTable: React.FC<UserTableProps> = ({
         </table>
       </div>
 
-      {hasPagination && totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center mt-6">
           <div className="border border-gray-200 rounded-[50px] w-full max-w-[983px] h-[68px] flex justify-between px-6 items-start relative">
             <div className="flex-1 flex justify-center">
               <Pagination
                 className="mt-4"
                 count={totalPages}
-                page={currentPage}
+                page={activePage}
                 onChange={(_, newPage) => setCurrentPage(newPage)}
                 color="primary"
                 variant="text"
@@ -216,7 +247,7 @@ export const GenericTable: React.FC<UserTableProps> = ({
                 renderItem={(item) => (
                   <PaginationItem
                     {...item}
-                    components={{
+                    slots={{
                       previous: () => (
                         <div className="flex items-center px-2 text-sm font-medium text-gray-600">
                           <NavigateBeforeIcon />
@@ -225,7 +256,7 @@ export const GenericTable: React.FC<UserTableProps> = ({
                       ),
                       next: () => (
                         <div className="flex items-center px-2 text-sm font-medium text-gray-600">
-                          <span style={{ marginRight: 4 }}>Próximo</span>
+                          <span style={{ marginRight: 4 }}>Próxima</span>
                           <NavigateNextIcon />
                         </div>
                       ),

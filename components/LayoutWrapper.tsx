@@ -23,6 +23,8 @@ export default function LayoutWrapper({
     activeKey = "dashboard";
   } else if (pathname === "/usuarios/admins") {
     activeKey = "geral_usuario_admins";
+  } else if (pathname === "/sistemas/thinklib/aprovacoes") {
+    activeKey = "thinklib_aprovacoes";
   }
 
   const handleNavigate = (key: ActiveKey) => {
@@ -30,6 +32,8 @@ export default function LayoutWrapper({
       router.push("/");
     } else if (key === "geral_usuario_admins") {
       router.push("/usuarios/admins");
+    } else if (key === "thinklib_aprovacoes") {
+      router.push("/sistemas/thinklib/aprovacoes");
     }
   };
 
