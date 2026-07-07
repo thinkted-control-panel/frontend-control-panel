@@ -275,6 +275,18 @@ export default function AprovacoesPage() {
   ];
 
   const handleRowClick = (item: ApprovalItem | EditApprovalItem) => {
+    if (item.status === "Reprovado") {
+      router.push(`/sistemas/thinklib/aprovacoes/reprovada?id=${item.id}&tab=${activeTab}`);
+      return;
+    }
+    if (item.status === "Aprovado") {
+      router.push(`/sistemas/thinklib/aprovacoes/aprovada?id=${item.id}&tab=${activeTab}`);
+      return;
+    }
+    if (activeTab === "edicao") {
+      router.push(`/sistemas/thinklib/aprovacoes/edicao?id=${item.id}`);
+      return;
+    }
     router.push(`/sistemas/thinklib/aprovacoes/visualizar?id=${item.id}&tab=${activeTab}`);
   };
 
