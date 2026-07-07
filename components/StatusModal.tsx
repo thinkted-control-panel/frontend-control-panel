@@ -7,9 +7,10 @@ interface StatusModalProps {
   onConfirm: () => void;
   title: string;
   subtitle: string;
-  placeholder: string;
-  justificativa: string;
-  onJustificativaChange: (val: string) => void;
+  placeholder?: string;
+  justificativa?: string;
+  onJustificativaChange?: (val: string) => void;
+  showJustificativa?: boolean;
 }
 
 export const StatusModal: React.FC<StatusModalProps> = ({
@@ -18,11 +19,14 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   onConfirm,
   title,
   subtitle,
-  placeholder,
-  justificativa,
+  placeholder = "Descreva o motivo...",
+  justificativa = "",
   onJustificativaChange,
+  showJustificativa = false,
 }) => {
   if (!isOpen) return null;
+
+  const isConfirmDisabled = showJustificativa && !justificativa.trim();
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -30,6 +34,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          title="Fechar"
         >
           <X size={20} />
         </button>
@@ -38,26 +43,29 @@ export const StatusModal: React.FC<StatusModalProps> = ({
           <h3 className="font-poppins font-semibold text-lg text-[#142E82]">
             {title}
           </h3>
-          <p className="text-[#5D657F] text-xs font-normal font-poppins">
+          <p className="text-[#5D657F] text-sm font-normal font-poppins">
             {subtitle}
           </p>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-gray-700 font-poppins">
-            Justificativa *
-          </label>
-          <textarea
-            required
-            rows={4}
-            value={justificativa}
-            onChange={(e) => onJustificativaChange(e.target.value)}
-            placeholder={placeholder}
-            className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none"
-          />
-        </div>
+        {showJustificativa && (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="modal-justificativa" className="text-xs font-medium text-gray-700 font-poppins">
+              Justificativa *
+            </label>
+            <textarea
+              id="modal-justificativa"
+              required
+              rows={4}
+              value={justificativa}
+              onChange={(e) => onJustificativaChange && onJustificativaChange(e.target.value)}
+              placeholder={placeholder}
+              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none"
+            />
+          </div>
+        )}
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-end gap-4 mt-2">
           <button
             type="button"
             onClick={onClose}
@@ -68,7 +76,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
           
           <button
             type="button"
-            disabled={!justificativa.trim()}
+            disabled={isConfirmDisabled}
             onClick={onConfirm}
             className="bg-[#142E82] text-white px-6 py-2 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >

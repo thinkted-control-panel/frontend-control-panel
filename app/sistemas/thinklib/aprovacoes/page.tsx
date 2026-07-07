@@ -1,9 +1,9 @@
 "use client";
-
-import React, { useState } from "react";
-import { Check } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SearchInput } from "@/components/SearchInput";
 import { GenericTable, type TableColumn } from "@/components/GenericTable";
+import { CircleCheck, CircleMinus, CircleX } from "lucide-react";
 
 interface ApprovalItem {
   id: string;
@@ -25,6 +25,7 @@ interface EditApprovalItem {
 }
 
 export default function AprovacoesPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"mecanicas" | "edicao">(
     "mecanicas",
   );
@@ -170,18 +171,21 @@ export default function AprovacoesPage() {
       case "Pendente":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] rounded-full border border-[#FEF3C7] font-poppins">
+            <CircleMinus size={12} strokeWidth={3}/>
             Pendente
           </span>
         );
       case "Aprovado":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#16A34A] bg-[#F0FDF4] rounded-full border border-[#DCFCE7] font-poppins">
+            <CircleCheck size={12} strokeWidth={3}/>
             Aprovado
           </span>
         );
       case "Reprovado":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#E02424] bg-[#FDF2F2] rounded-full border border-[#FDE8E8] font-poppins">
+            <CircleX size={12} strokeWidth={3}/>
             Reprovado
           </span>
         );
@@ -270,6 +274,10 @@ export default function AprovacoesPage() {
     },
   ];
 
+  const handleRowClick = (item: ApprovalItem | EditApprovalItem) => {
+    router.push(`/sistemas/thinklib/aprovacoes/visualizar?id=${item.id}&tab=${activeTab}`);
+  };
+
   return (
     <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white">
       <div className="text-xs text-[#8E95A5] font-poppins -mb-2">
@@ -330,6 +338,7 @@ export default function AprovacoesPage() {
             columns={mecanicasColumns}
             searchTerm={searchTerm}
             itemsPerPage={11}
+            onRowClick={handleRowClick}
           />
         ) : (
           <GenericTable
@@ -337,6 +346,7 @@ export default function AprovacoesPage() {
             columns={edicoesColumns}
             searchTerm={searchTerm}
             itemsPerPage={11}
+            onRowClick={handleRowClick}
           />
         )}
       </div>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import {
   ArrowUpDown,
-  Ban,
-  Check,
+  CircleCheck,
+  CircleX,
   Filter,
 } from "lucide-react";
 import Pagination from "@mui/material/Pagination";
@@ -112,12 +112,12 @@ export const GenericTable = <T,>({
       render: (user) =>
         user.status === "Ativo" ? (
           <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#16A34A] bg-[#F0FDF4] rounded-full border border-[#DCFCE7]">
-            <Check size={12} strokeWidth={3} className="text-[#16A34A]" />
+            <CircleCheck size={12} strokeWidth={3} className="text-[#16A34A]" />
             Ativo
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] rounded-full border border-[#FEF3C7]">
-            <Ban size={12} strokeWidth={3} className="text-[#D97706]" />
+            <CircleX size={12} strokeWidth={3} className="text-[#D97706]" />
             Suspenso
           </span>
         ),
