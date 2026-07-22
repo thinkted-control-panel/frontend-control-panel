@@ -11,6 +11,8 @@ interface StatusModalProps {
   justificativa?: string;
   onJustificativaChange?: (val: string) => void;
   showJustificativa?: boolean;
+  confirmText?: string;
+  confirmVariant?: "primary" | "danger";
 }
 
 export const StatusModal: React.FC<StatusModalProps> = ({
@@ -23,10 +25,17 @@ export const StatusModal: React.FC<StatusModalProps> = ({
   justificativa = "",
   onJustificativaChange,
   showJustificativa = false,
+  confirmText = "Confirmar",
+  confirmVariant = "primary",
 }) => {
   if (!isOpen) return null;
 
   const isConfirmDisabled = showJustificativa && !justificativa.trim();
+
+  const confirmBgClass =
+    confirmVariant === "danger"
+      ? "bg-[#D83941] text-white hover:bg-[#b82d34]"
+      : "bg-[#142E82] text-white hover:bg-[#0f2263]";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -60,7 +69,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
               value={justificativa}
               onChange={(e) => onJustificativaChange && onJustificativaChange(e.target.value)}
               placeholder={placeholder}
-              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none"
+              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-[8px] focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900 placeholder-gray-400 transition resize-none font-poppins"
             />
           </div>
         )}
@@ -73,14 +82,14 @@ export const StatusModal: React.FC<StatusModalProps> = ({
           >
             Cancelar
           </button>
-          
+
           <button
             type="button"
             disabled={isConfirmDisabled}
             onClick={onConfirm}
-            className="bg-[#142E82] text-white px-6 py-2 rounded-[8px] hover:bg-[#0f2263] transition-colors font-poppins font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${confirmBgClass} px-6 py-2 rounded-[8px] transition-colors font-poppins font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            Confirmar
+            {confirmText}
           </button>
         </div>
       </div>
