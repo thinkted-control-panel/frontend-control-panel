@@ -29,7 +29,13 @@ api.interceptors.response.use(
 
     const { status } = error.response;
 
-    if (status === 401) {
+
+    const requestUrl = error.config?.url ?? "";
+    const isAuthEndpoint = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+    const isOnLoginPage =
+      typeof window !== "undefined" && window.location.pathname === "/login";
+
+    if (status === 401 && !isAuthEndpoint && !isOnLoginPage) {
       localStorage.clear();
       sessionStorage.removeItem("hasSeenPasswordPopup");
       window.location.href = "/login";

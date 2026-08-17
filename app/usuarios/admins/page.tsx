@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
 import { PageTitle } from '@/components/PageTitle';
 import { SearchInput } from '@/components/SearchInput';
 import { GenericTable, type TableUser } from '@/components/GenericTable';
@@ -8,6 +7,7 @@ import { CreateAdminForm } from '@/components/CreateAdminForm';
 import { EditAdminForm } from '@/components/EditAdminForm';
 import { listUsers } from '@/services/UserService';
 import { IUser } from '@/interfaces/IUser';
+import { handleApiError } from '@/utils/handleApiError';
 
 const mapToTableUser = (user: IUser): TableUser => ({
   id: user.id,
@@ -30,7 +30,7 @@ export default function AdminsPage() {
       const data = await listUsers();
       setUsers(data.map(mapToTableUser));
     } catch (error) {
-      toast.error('Erro ao carregar usuários. Tente novamente.');
+      handleApiError(error, 'Erro ao carregar usuários. Tente novamente.');
     } finally {
       setIsLoading(false);
     }

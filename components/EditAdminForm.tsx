@@ -10,6 +10,8 @@ import { registerSchema, type RegisterFormData } from '@/schemas/registerSchema'
 import { formatDate, formatPhone } from '@/utils/masks';
 import { getUser, updateUser } from '@/services/UserService';
 import { IUpdateUser } from '@/interfaces/IUpdateUser';
+import { handleApiError, parseApiError } from '@/utils/handleApiError';
+import { showToast } from '@/utils/toast';
 
 interface User {
   id: string;
@@ -124,8 +126,8 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
           permissoes: buildPermissoesFromPolicies(full.permissionPolicies ?? []),
         });
         setStatus(full.isActive ? 'Ativo' : 'Suspenso');
-      } catch {
-        toast.error('Erro ao carregar os dados do usuário.');
+      } catch (error) {
+        handleApiError(error, 'Erro ao carregar os dados do usuário.');
       }
     })();
     return () => {
@@ -203,12 +205,15 @@ export const EditAdminForm: React.FC<EditAdminFormProps> = ({ user, onClose, onS
         status: updated.isActive ? 'Ativo' : 'Suspenso',
       });
       onClose();
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        setError('email', { message: 'E-mail já existe' });
+    } catch (error) {
+      const { status, message } = parseApiError(error, 'Erro ao atualizar usuário. Tente novamente.');
+
+      if (status === 409) {
+        setError('email', { message });
         return;
       }
-      toast.error('Erro ao atualizar usuário. Tente novamente.');
+
+      showToast.error(message);
     }
   };
 

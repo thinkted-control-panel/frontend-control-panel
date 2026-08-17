@@ -38,11 +38,11 @@ export default function RootLayout({
         className={`${poppins.variable} antialiased`}
       >
 
-        <LayoutWrapper>
-          <AuthProvider>
-          {children}
-          </AuthProvider>
-        </LayoutWrapper>
+        <AuthProvider>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
+        </AuthProvider>
         <ToastContainer
           position="top-right"
           autoClose={3000}

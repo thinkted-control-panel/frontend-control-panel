@@ -29,7 +29,7 @@ export default function LayoutWrapper({
 
   const handleNavigate = (key: ActiveKey) => {
     if (key === "dashboard") {
-      router.push("/");
+      router.push("/dashboard");
     } else if (key === "geral_usuario_admins") {
       router.push("/usuarios/admins");
     } else if (key === "thinklib_aprovacoes") {

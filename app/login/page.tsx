@@ -8,13 +8,17 @@ import { useForm } from "react-hook-form";
 import { ILogin } from "@/interfaces/ILogin";
 import { CustomButton } from "@/components/forms/CustomButton";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
 import { login } from "@/services/LoginService";
 import { useAuth } from "@/contexts/AuthContext";
+import { handleApiError } from "@/utils/handleApiError";
 
 export default function Login() {
-  const { register, handleSubmit } = useForm<ILogin>();
-  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ILogin>();
   const { setToken } = useAuth();
 
   const onSubmit = async (data: ILogin) => {
@@ -22,10 +26,11 @@ export default function Login() {
       const token = await login(data);
       setToken(token);
       toast.success("Login realizado com sucesso!");
-      router.push("/");
-    } catch (error: any) {
-      console.log(error.message);
-      toast.error("Erro ao realizar login. Verifique suas credenciais.");
+    } catch (error) {
+      // Erros de validação (400) caem nos inputs; o resto vai para o toast.
+      handleApiError(error, "Erro ao realizar login. Verifique suas credenciais.", {
+        setError,
+      });
     }
   };
 
@@ -45,15 +50,21 @@ export default function Login() {
             type="email"
             label="Email"
             placeholder="Insira seu e-mail"
+            error={!!errors.email}
+            helperText={errors.email?.message}
           />
           <CustomTextInput
             {...register("password")}
             label="Senha"
             placeholder="Insira sua senha"
             type="password"
+            error={!!errors.password}
+            helperText={errors.password?.message}
           />
 
-          <CustomButton onClick={handleSubmit(onSubmit)}>Entrar</CustomButton>
+          <CustomButton onClick={handleSubmit(onSubmit)} isLoading={isSubmitting}>
+            Entrar
+          </CustomButton>
         </form>
       </div>
 

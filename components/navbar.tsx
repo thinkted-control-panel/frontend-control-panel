@@ -1,12 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown, LogOut } from "lucide-react";
 
 import logoEcosistema from "../imports/logo.svg";
 import avatarMock from "../imports/avatar-mock.svg";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function TopBar() {
+  const { logout } = useAuth();
+
   return (
     <header className="w-full h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-6">
       {/* ===== LEFT (Logo + Nome sistema) ===== */}
@@ -63,6 +66,15 @@ export default function TopBar() {
           </div>
 
           <ChevronDown size={16} className="text-gray-500" />
+        </button>
+        <button
+          type="button"
+          onClick={logout}
+          className="text-gray-600 hover:text-[#142E82] transition-colors"
+          aria-label="Sair"
+          title="Sair"
+        >
+          <LogOut size={20} />
         </button>
       </div>
     </header>

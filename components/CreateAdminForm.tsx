@@ -9,6 +9,8 @@ import { registerSchema, type RegisterFormData } from '@/schemas/registerSchema'
 import { register as registerUser } from '@/services/RegisterService';
 import IRegister from '@/interfaces/IRegister';
 import { formatDate, formatPhone } from '@/utils/masks';
+import { parseApiError } from '@/utils/handleApiError';
+import { showToast } from '@/utils/toast';
 
 interface CreateAdminFormProps {
   onClose: () => void;
@@ -105,12 +107,15 @@ export const CreateAdminForm: React.FC<CreateAdminFormProps> = ({ onClose }) => 
       await registerUser(buildPayload(data));
       toast.success('Usuário criado com sucesso!');
       onClose();
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        setError('email', { message: 'E-mail já existe' });
+    } catch (error) {
+      const { status, message } = parseApiError(error, 'Erro ao criar usuário. Tente novamente.');
+
+      if (status === 409) {
+        setError('email', { message });
         return;
       }
-      toast.error('Erro ao criar usuário. Tente novamente.');
+
+      showToast.error(message);
     }
   };
 
