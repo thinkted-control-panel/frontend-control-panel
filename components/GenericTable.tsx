@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ArrowUpDown,
   CircleCheck,
@@ -24,6 +24,7 @@ export interface TableColumn<T> {
   render?: (item: T, index: number) => React.ReactNode;
   sortable?: boolean;
   filterable?: boolean;
+  filterLabel?: string;
   className?: string;
 }
 
@@ -71,6 +72,21 @@ export const GenericTable = <T,>({
   itemsPerPage = 11,
 }: GenericTableProps<T>) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
+  const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!openFilter) return;
+      const ref = filterRefs.current[openFilter];
+      if (ref && !ref.contains(e.target as Node)) {
+        setOpenFilter(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openFilter]);
 
   const defaultUserColumns: TableColumn<TableUser>[] = [
     {
@@ -127,24 +143,46 @@ export const GenericTable = <T,>({
   const finalColumns = (columns || (users ? defaultUserColumns : [])) as TableColumn<any>[];
   const finalData = (data || users || []) as any[];
 
+  const getUniqueValues = (key: string): string[] => {
+    const seen = new Set<string>();
+    const values: string[] = [];
+    for (const item of finalData) {
+      const val = String(item[key] ?? "");
+      if (val && !seen.has(val)) {
+        seen.add(val);
+        values.push(val);
+      }
+    }
+    return values.sort();
+  };
+
+  const toggleFilterValue = (colKey: string, value: string) => {
+    setActiveFilters((prev) => {
+      const current = new Set(prev[colKey] ?? []);
+      if (current.has(value)) current.delete(value);
+      else current.add(value);
+      return { ...prev, [colKey]: current };
+    });
+    setCurrentPage(1);
+  };
+
   const filteredData = finalData.filter((item) => {
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return true;
-
-    return Object.keys(item).some((key) => {
+    const matchesSearch = !term || Object.keys(item).some((key) => {
       const val = item[key];
       if (val === null || val === undefined) return false;
-      if (typeof val === "string") {
-        return val.toLowerCase().includes(term);
-      }
-      if (typeof val === "number") {
-        return String(val).includes(term);
-      }
-      if (Array.isArray(val)) {
-        return val.some((subVal) => typeof subVal === "string" && subVal.toLowerCase().includes(term));
-      }
+      if (typeof val === "string") return val.toLowerCase().includes(term);
+      if (typeof val === "number") return String(val).includes(term);
+      if (Array.isArray(val)) return val.some((v) => typeof v === "string" && v.toLowerCase().includes(term));
       return false;
     });
+
+    const matchesFilters = Object.entries(activeFilters).every(([key, values]) => {
+      if (values.size === 0) return true;
+      return values.has(String(item[key] ?? ""));
+    });
+
+    return matchesSearch && matchesFilters;
   });
 
   const totalItems = filteredData.length;
@@ -156,15 +194,11 @@ export const GenericTable = <T,>({
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
   const startResult = String(totalItems === 0 ? 0 : indexOfFirstItem + 1).padStart(2, "0");
-  const endResult = String(Math.min(indexOfLastItem, totalItems)).padStart(2, "0");
   const totalResults = String(totalItems).padStart(2, "0");
 
   const handleRowClick = (item: any) => {
-    if (onRowClick) {
-      onRowClick(item as T);
-    } else if (onEditUser && users) {
-      onEditUser(item as TableUser);
-    }
+    if (onRowClick) onRowClick(item as T);
+    else if (onEditUser && users) onEditUser(item as TableUser);
   };
 
   const colCount = finalColumns.length + 1;
@@ -181,11 +215,62 @@ export const GenericTable = <T,>({
                 </div>
               </th>
               {finalColumns.map((col) => (
-                <th key={col.key} className={`pb-4 py-3 px-4 text-[#5D657F] font-poppins ${col.className || ""}`}>
-                  <div className="flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors">
+                <th
+                  key={col.key}
+                  className={`pb-4 py-3 px-4 text-[#5D657F] font-poppins relative ${col.className || ""}`}
+                >
+                  <div
+                    className={`flex items-center gap-1 select-none cursor-pointer hover:text-gray-700 transition-colors ${col.className?.includes("text-right") ? "justify-end" : ""}`}
+                  >
                     {col.header}
                     {col.sortable && <ArrowUpDown className="w-4 h-4" />}
-                    {col.filterable && <Filter className="w-4 h-4" />}
+                    {col.filterable && (
+                      <div
+                        ref={(el) => { filterRefs.current[col.key] = el; }}
+                        className="relative"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenFilter((prev) => prev === col.key ? null : col.key);
+                          }}
+                          className={`p-0.5 rounded transition-colors ${
+                            (activeFilters[col.key]?.size ?? 0) > 0
+                              ? "text-[#1D43BE]"
+                              : "hover:text-gray-600"
+                          }`}
+                        >
+                          <Filter className="w-4 h-4" />
+                        </button>
+
+                        {openFilter === col.key && (
+                          <div className="absolute top-full left-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-md min-w-[200px] py-3">
+                            <p className="px-4 pb-2 text-xs font-semibold text-[#0D0C0B] font-poppins">
+                              {col.filterLabel ?? `Filtrar por ${col.header.toLowerCase()}`}
+                            </p>
+                            <div className="flex flex-col">
+                              {getUniqueValues(col.key).map((value) => {
+                                const checked = activeFilters[col.key]?.has(value) ?? false;
+                                return (
+                                  <label
+                                    key={value}
+                                    className="flex items-center gap-2.5 px-4 py-1.5 hover:bg-[#F8FAFE] cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => toggleFilterValue(col.key, value)}
+                                      className="w-3.5 h-3.5 rounded accent-[#1D43BE] cursor-pointer"
+                                    />
+                                    <span className="text-xs text-[#8E95A5] font-poppins">{value}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </th>
               ))}
@@ -267,7 +352,7 @@ export const GenericTable = <T,>({
             </div>
 
             <span className="text-sm font-medium text-[#8B8B8B] mt-[23px] whitespace-nowrap absolute right-6">
-              Exibindo {startResult}-{endResult} de {totalResults} resultados
+              Exibindo {startResult} de {totalResults} resultados
             </span>
           </div>
         </div>

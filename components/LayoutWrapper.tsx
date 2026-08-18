@@ -25,6 +25,8 @@ export default function LayoutWrapper({
     activeKey = "geral_usuario_admins";
   } else if (pathname.startsWith("/sistemas/thinklib/aprovacoes")) {
     activeKey = "thinklib_aprovacoes";
+  } else if (pathname.startsWith("/sistemas/thinklib/itens")) {
+    activeKey = "thinklib_itens";
   } else if (pathname.startsWith("/sistemas/gameted/aprovacoes")) {
     activeKey = "gameted_aprovacoes";
   }
@@ -36,6 +38,8 @@ export default function LayoutWrapper({
       router.push("/usuarios/admins");
     } else if (key === "thinklib_aprovacoes") {
       router.push("/sistemas/thinklib/aprovacoes");
+    } else if (key === "thinklib_itens") {
+      router.push("/sistemas/thinklib/itens");
     } else if (key === "gameted_aprovacoes") {
       router.push("/sistemas/gameted/aprovacoes");
     }

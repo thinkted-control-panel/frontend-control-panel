@@ -27,7 +27,6 @@ export default function Login() {
       setToken(token);
       toast.success("Login realizado com sucesso!");
     } catch (error) {
-      // Erros de validação (400) caem nos inputs; o resto vai para o toast.
       handleApiError(error, "Erro ao realizar login. Verifique suas credenciais.", {
         setError,
       });
