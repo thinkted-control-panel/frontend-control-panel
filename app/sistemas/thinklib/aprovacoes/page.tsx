@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { SearchInput } from "@/components/SearchInput";
 import { GenericTable, type TableColumn } from "@/components/GenericTable";
 import { CircleCheck, CircleMinus, CircleX } from "lucide-react";
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 interface ApprovalItem {
   id: string;
@@ -292,11 +293,7 @@ export default function AprovacoesPage() {
 
   return (
     <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white">
-      <div className="text-xs text-[#8E95A5] font-poppins -mb-2">
-        Sistemas <span className="mx-1">/</span> ThinkLib{" "}
-        <span className="mx-1">/</span>{" "}
-        <span className="font-semibold text-gray-700">Aprovações</span>
-      </div>
+      <Breadcrumb items={['Sistemas', 'ThinkLib', 'Aprovações']} />
 
       <div className="flex gap-6 border-b border-gray-200 -mb-2 mt-2">
         <button

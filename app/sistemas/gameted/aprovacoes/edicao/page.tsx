@@ -6,6 +6,7 @@ import { CircleCheck, CircleX, X, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { StatusModal } from "@/components/StatusModal";
 import { CustomButton } from "@/components/forms/CustomButton";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 interface GameEditRequestItem {
   id: string;
@@ -205,18 +206,14 @@ function AnalisarJogoEdicaoContent() {
 
   return (
     <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white min-h-screen">
-      <div className="text-xs text-[#8E95A5] font-poppins -mb-2">
-        Sistemas <span className="mx-1">/</span> GameTed{" "}
-        <span className="mx-1">/</span>{" "}
-        <span
-          className="cursor-pointer hover:underline text-gray-500"
-          onClick={() => setIsExitOpen(true)}
-        >
-          Aprovações
-        </span>{" "}
-        <span className="mx-1">/</span>{" "}
-        <span className="font-semibold text-gray-700">Analisar edição</span>
-      </div>
+      <Breadcrumb
+        items={[
+          'Sistemas',
+          'GameTed',
+          { label: 'Aprovações', onClick: () => setIsExitOpen(true) },
+          'Analisar edição',
+        ]}
+      />
 
       <div className="flex justify-between items-center mt-2">
         <h1 className="font-poppins font-medium text-[20px] text-[#142E82] tracking-wide antialiased">

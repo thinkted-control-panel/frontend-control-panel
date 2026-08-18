@@ -3,6 +3,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Copy, X } from "lucide-react";
 import { toast } from "react-toastify";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 interface CodeFile {
   name: string;
@@ -135,15 +136,14 @@ function MecanicaReprovadaContent() {
 
   return (
     <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white min-h-screen">
-      <div className="text-xs text-[#8E95A5] font-poppins -mb-2">
-        Sistemas <span className="mx-1">/</span> ThinkLib{" "}
-        <span className="mx-1">/</span>{" "}
-        <span className="cursor-pointer hover:underline text-gray-500" onClick={() => router.push("/sistemas/thinklib/aprovacoes")}>
-          Aprovações
-        </span>{" "}
-        <span className="mx-1">/</span>{" "}
-        <span className="font-semibold text-gray-700">Mecânica reprovada</span>
-      </div>
+      <Breadcrumb
+        items={[
+          'Sistemas',
+          'ThinkLib',
+          { label: 'Aprovações', onClick: () => router.push("/sistemas/thinklib/aprovacoes") },
+          'Mecânica reprovada',
+        ]}
+      />
 
       <div className="flex justify-between items-center mt-2">
         <h1 className="font-poppins font-medium text-[20px] text-[#730C0E] tracking-wide antialiased">

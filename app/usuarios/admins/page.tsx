@@ -8,6 +8,7 @@ import { EditAdminForm } from '@/components/EditAdminForm';
 import { listUsers } from '@/services/UserService';
 import { IUser } from '@/interfaces/IUser';
 import { handleApiError } from '@/utils/handleApiError';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 const mapToTableUser = (user: IUser): TableUser => ({
   id: user.id,
@@ -65,9 +66,7 @@ export default function AdminsPage() {
 
   return (
     <div className="pt-10 pb-10 px-[29.5px] flex flex-col gap-6 w-full bg-white">
-      <div className="text-xs text-[#8E95A5] font-poppins -mb-2">
-        Sistemas <span className="mx-1">/</span> Usuário <span className="mx-1">/</span> <span className="font-semibold text-gray-700">Administrador</span>
-      </div>
+      <Breadcrumb items={['Sistemas', 'Usuário', 'Administrador']} />
 
       <div>
         <PageTitle title="Gerenciar usuários administradores" />
