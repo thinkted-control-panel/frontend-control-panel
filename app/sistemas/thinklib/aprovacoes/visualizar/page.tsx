@@ -1,307 +1,42 @@
 "use client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CircleCheck, CircleX, Copy, X, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { StatusModal } from "@/components/StatusModal";
-
-interface CodeFile {
-  name: string;
-  code: string;
-}
-
-interface ApprovalItem {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  dateTime: string;
-  status: "Pendente" | "Aprovado" | "Reprovado";
-  type?: string;
-  presentationText?: string;
-  detailedDescription?: string;
-  unityVersion?: string;
-  codeFiles?: CodeFile[];
-  demoVideo?: string;
-}
-
-const mockMecanicas: ApprovalItem[] = [
-  {
-    id: "1",
-    name: "Ataque Corpo a Corpo",
-    category: "Plataforma",
-    description: "Mecânica de combate direto...",
-    dateTime: "18/04/2026 20:00:12",
-    status: "Pendente",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "2",
-    name: "Ataque Corpo a Corpo",
-    category: "Point-and-Click",
-    description: "Mecânica de combate direto...",
-    dateTime: "17/04/2026 20:00:12",
-    status: "Pendente",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "3",
-    name: "Ataque Corpo a Corpo",
-    category: "Tower Defense",
-    description: "Mecânica de combate direto...",
-    dateTime: "16/04/2026 20:00:12",
-    status: "Pendente",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "4",
-    name: "Ataque Corpo a Corpo",
-    category: "Tower Defense",
-    description: "Mecânica de combate direto...",
-    dateTime: "15/04/2026 20:00:12",
-    status: "Pendente",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "5",
-    name: "Ataque Corpo a Corpo",
-    category: "Plataforma",
-    description: "Mecânica de combate direto...",
-    dateTime: "14/04/2026 20:00:12",
-    status: "Aprovado",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "6",
-    name: "Ataque Corpo a Corpo",
-    category: "Point-and-Click",
-    description: "Mecânica de combate direto...",
-    dateTime: "14/04/2026 20:00:12",
-    status: "Aprovado",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "7",
-    name: "Ataque Corpo a Corpo",
-    category: "Plataforma",
-    description: "Mecânica de combate direto...",
-    dateTime: "13/04/2026 20:00:12",
-    status: "Reprovado",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "8",
-    name: "Ataque Corpo a Corpo",
-    category: "Plataforma",
-    description: "Mecânica de combate direto...",
-    dateTime: "12/02/2026 20:00:12",
-    status: "Reprovado",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "9",
-    name: "Ataque Corpo a Corpo",
-    category: "Plataforma",
-    description: "Mecânica de combate direto...",
-    dateTime: "12/02/2026 20:00:12",
-    status: "Pendente",
-    type: "Combate",
-    presentationText: "Mecânica de combate direto com sistema.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "PlayerMeleeAttackController.cs",
-        code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-];
-
-const mockEdicoes: ApprovalItem[] = [
-  {
-    id: "e1",
-    name: "Ataque Duplo",
-    category: "Plataforma",
-    description: "Mecânica de ataque consecutivo...",
-    dateTime: "18/04/2026 21:10:00",
-    status: "Pendente",
-    type: "Movimento",
-    presentationText: "Mecânica de ataque consecutivo rápido.",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "DoubleAttack.cs",
-        code: `using UnityEngine;\n\npublic class DoubleAttack : MonoBehaviour\n{\n    void Trigger()\n    {\n        // Double hit logic\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "e2",
-    name: "Salto Duplo",
-    category: "Plataforma",
-    description: "Permite pular uma segunda vez no ar...",
-    dateTime: "17/04/2026 15:30:12",
-    status: "Pendente",
-    type: "Movimento",
-    presentationText: "Permite pular uma segunda vez no ar...",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "DoubleJump.cs",
-        code: `using UnityEngine;\n\npublic class DoubleJump : MonoBehaviour\n{\n    private int jumpCount = 0;\n    void Update()\n    {\n        if (Input.GetButtonDown("Jump") && jumpCount < 2)\n        {\n            jumpCount++;\n        }\n    }\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "e3",
-    name: "Dash Lateral",
-    category: "Tower Defense",
-    description: "Esquiva rápida para as laterais...",
-    dateTime: "15/04/2026 09:20:45",
-    status: "Aprovado",
-    type: "Movimento",
-    presentationText: "Esquiva rápida para as laterais...",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "SideDash.cs",
-        code: `using UnityEngine;\n\npublic class SideDash : MonoBehaviour\n{\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-  {
-    id: "e4",
-    name: "Defesa de Escudo",
-    category: "Point-and-Click",
-    description: "Bloqueia ataques frontais...",
-    dateTime: "12/04/2026 14:15:22",
-    status: "Reprovado",
-    type: "Defesa",
-    presentationText: "Bloqueia ataques frontais...",
-    detailedDescription: "-",
-    unityVersion: "6000.1.1",
-    codeFiles: [
-      {
-        name: "ShieldBlock.cs",
-        code: `using UnityEngine;\n\npublic class ShieldBlock : MonoBehaviour\n{\n}`
-      }
-    ],
-    demoVideo: "https://www.figma.com/design"
-  },
-];
+import * as MechanicService from "@/services/thinklib/MechanicService";
+import { IMechanic } from "@/interfaces/thinklib/IMechanic";
 
 function VisualizarMecanicaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const tab = searchParams.get("tab") || "mecanicas";
 
-  const [item, setItem] = useState<ApprovalItem | null>(null);
+  const [item, setItem] = useState<IMechanic | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [justificativa, setJustificativa] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      const sourceList = tab === "edicao" ? mockEdicoes : mockMecanicas;
-      const found = sourceList.find((x) => x.id === id);
-      if (found) {
-        setItem(found);
-      }
+  const loadMechanic = useCallback(async () => {
+    if (!id) return;
+    setIsLoading(true);
+    try {
+      const mechanic = await MechanicService.getMechanicById(id, "Pending");
+      setItem(mechanic);
+    } catch (err) {
+      console.error("[ThinkLib] Failed to load mechanic:", err);
+    } finally {
+      setIsLoading(false);
     }
-  }, [id, tab]);
+  }, [id]);
 
-  if (!item) {
+  useEffect(() => { loadMechanic(); }, [loadMechanic]);
+
+  if (isLoading || !item) {
     return (
       <div className="pt-10 pb-10 px-[29.5px] font-poppins text-gray-500">
         Carregando dados da mecânica...
@@ -309,7 +44,7 @@ function VisualizarMecanicaContent() {
     );
   }
 
-  const category = item.category || "Point-and-Click";
+  const category = item.categoryName || "-";
   let dotColor = "bg-gray-400";
   if (category.toLowerCase() === "plataforma") dotColor = "bg-[#D83941]";
   else if (category.toLowerCase() === "point-and-click") dotColor = "bg-[#EAAE31]";
@@ -324,42 +59,62 @@ function VisualizarMecanicaContent() {
     }, 2000);
   };
 
-  const handleConfirmApprove = () => {
-    setIsApproveOpen(false);
-    toast.success(
-      <div className="flex flex-col gap-0.5">
-        <span className="font-semibold text-[#16A34A] text-sm font-poppins">Sucesso</span>
-        <span className="text-xs text-[#5D657F] font-poppins">Mecânica foi aprovada.</span>
-      </div>,
-      {
-        icon: <CircleCheck size={18} className="text-[#16A34A]" />,
-        style: {
-          backgroundColor: "#F0FDF4",
-          border: "1px solid #DCFCE7",
-          borderRadius: "8px",
-        },
-      }
-    );
-    router.push("/sistemas/thinklib/aprovacoes");
+  const handleConfirmApprove = async () => {
+    if (!id) return;
+    setSubmitting(true);
+    try {
+      await MechanicService.reviewMechanic(id, "Approved");
+      setIsApproveOpen(false);
+      toast.success(
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#16A34A] text-sm font-poppins">Sucesso</span>
+          <span className="text-xs text-[#5D657F] font-poppins">Mecânica foi aprovada.</span>
+        </div>,
+        {
+          icon: <CircleCheck size={18} className="text-[#16A34A]" />,
+          style: {
+            backgroundColor: "#F0FDF4",
+            border: "1px solid #DCFCE7",
+            borderRadius: "8px",
+          },
+        }
+      );
+      router.push("/sistemas/thinklib/aprovacoes");
+    } catch (err) {
+      console.error("[ThinkLib] Failed to approve mechanic:", err);
+      toast.error("Não foi possível aprovar a mecânica.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleConfirmReject = () => {
-    setIsRejectOpen(false);
-    toast.error(
-      <div className="flex flex-col gap-0.5">
-        <span className="font-semibold text-[#E02424] text-sm font-poppins">Atenção</span>
-        <span className="text-xs text-[#5D657F] font-poppins">Mecânica reprovada.</span>
-      </div>,
-      {
-        icon: <AlertCircle size={18} className="text-[#E02424]" />,
-        style: {
-          backgroundColor: "#FDF2F2",
-          border: "1px solid #FDE8E8",
-          borderRadius: "8px",
-        },
-      }
-    );
-    router.push("/sistemas/thinklib/aprovacoes");
+  const handleConfirmReject = async () => {
+    if (!id || !justificativa.trim()) return;
+    setSubmitting(true);
+    try {
+      await MechanicService.reviewMechanic(id, "Rejected", justificativa.trim());
+      setIsRejectOpen(false);
+      toast.error(
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#E02424] text-sm font-poppins">Atenção</span>
+          <span className="text-xs text-[#5D657F] font-poppins">Mecânica reprovada.</span>
+        </div>,
+        {
+          icon: <AlertCircle size={18} className="text-[#E02424]" />,
+          style: {
+            backgroundColor: "#FDF2F2",
+            border: "1px solid #FDE8E8",
+            borderRadius: "8px",
+          },
+        }
+      );
+      router.push("/sistemas/thinklib/aprovacoes");
+    } catch (err) {
+      console.error("[ThinkLib] Failed to reject mechanic:", err);
+      toast.error("Não foi possível reprovar a mecânica.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -406,7 +161,7 @@ function VisualizarMecanicaContent() {
                 type="text"
                 readOnly
                 disabled
-                value={item.name}
+                value={item.name ?? ""}
                 className="w-full h-11 px-4 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-700 font-poppins text-sm"
               />
             </div>
@@ -434,7 +189,7 @@ function VisualizarMecanicaContent() {
                   type="text"
                   readOnly
                   disabled
-                  value={item.type || "Combate"}
+                  value={item.typeName ?? ""}
                   className="w-full h-11 px-4 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-700 font-poppins text-sm"
                 />
               </div>
@@ -452,7 +207,7 @@ function VisualizarMecanicaContent() {
                 readOnly
                 disabled
                 rows={3}
-                value={item.presentationText || "Mecânica de combate direto com sistema."}
+                value={item.presentationText ?? ""}
                 className="w-full px-4 py-3 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-700 font-poppins text-sm resize-none"
               />
             </div>
@@ -469,7 +224,7 @@ function VisualizarMecanicaContent() {
                 readOnly
                 disabled
                 rows={4}
-                value={item.detailedDescription || "-"}
+                value={item.description ?? "-"}
                 className="w-full px-4 py-3 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-700 font-poppins text-sm resize-none"
               />
             </div>
@@ -489,20 +244,15 @@ function VisualizarMecanicaContent() {
                 Versão da Unity
               </span>
               <div className="w-full h-11 px-4 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] flex items-center justify-between text-gray-700 font-poppins text-sm select-none">
-                <span>{item.unityVersion || "6000.1.1"}</span>
+                <span>{item.unityVersion ?? "-"}</span>
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </div>
             </div>
 
-            {(item.codeFiles || [
-              {
-                name: "PlayerMeleeAttackController.cs",
-                code: `using UnityEngine;\nusing UnityEngine.UI;\n\npublic class PlayerMeleeAttackController : MonoBehaviour\n{\n    void Start()\n    {\n        Debug.Log("Melee attack initialized");\n    }\n}`
-              }
-            ]).map((file, idx) => (
-              <div key={idx} className="flex flex-col gap-4">
+            {(item.sourceFiles ?? []).map((file, idx) => (
+              <div key={file.id ?? idx} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <span className="text-sm text-gray-600 font-poppins font-normal">
                     Nome do código*
@@ -515,7 +265,7 @@ function VisualizarMecanicaContent() {
                     type="text"
                     readOnly
                     disabled
-                    value={file.name}
+                    value={file.fileName}
                     className="w-full h-11 px-4 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-700 font-poppins text-sm"
                   />
                 </div>
@@ -527,7 +277,7 @@ function VisualizarMecanicaContent() {
                   <div className="relative rounded-[8px] overflow-hidden bg-[#0A0D1A] border border-gray-800">
                     <div className="flex justify-end bg-[#131930] px-4 py-2 border-b border-gray-800">
                       <button
-                        onClick={() => handleCopyCode(file.code, idx)}
+                        onClick={() => handleCopyCode(file.fileContent, idx)}
                         className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-white font-poppins transition-colors"
                       >
                         <Copy size={13} />
@@ -535,7 +285,7 @@ function VisualizarMecanicaContent() {
                       </button>
                     </div>
                     <pre className="p-4 text-gray-100 font-mono text-xs overflow-x-auto whitespace-pre leading-relaxed">
-                      <code>{file.code}</code>
+                      <code>{file.fileContent}</code>
                     </pre>
                   </div>
                 </div>
@@ -564,7 +314,7 @@ function VisualizarMecanicaContent() {
                 type="text"
                 readOnly
                 disabled
-                value={item.demoVideo || "https://www.figma.com/design"}
+                value={item.videoUrl ?? ""}
                 className="w-full h-11 px-4 rounded-[8px] border border-[#CDD0DA] bg-[#F1F3F9] text-gray-500 font-poppins text-sm"
               />
             </div>
@@ -573,26 +323,28 @@ function VisualizarMecanicaContent() {
               <span className="text-sm text-gray-600 font-poppins font-normal">
                 GIF da mecânica
               </span>
-              <div className="w-full h-40 rounded-[8px] border-2 border-dashed border-[#CDD0DA] bg-[#F8FAFC] flex flex-col items-center justify-center gap-2">
-                <div className="w-16 h-16 rounded-[12px] bg-[#EEF2F6] flex items-center justify-center text-blue-600">
-                  <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
+              {item.gifUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.gifUrl} alt="GIF da mecânica" className="w-full h-40 object-contain rounded-[8px] border border-[#CDD0DA] bg-[#F8FAFC]" />
+              ) : (
+                <div className="w-full h-40 rounded-[8px] border-2 border-dashed border-[#CDD0DA] bg-[#F8FAFC] flex items-center justify-center text-sm text-gray-400 font-poppins">
+                  Sem GIF
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
               <span className="text-sm text-gray-600 font-poppins font-normal">
                 Imagem da capa
               </span>
-              <div className="w-full h-40 rounded-[8px] border-2 border-dashed border-[#CDD0DA] bg-[#F8FAFC] flex flex-col items-center justify-center gap-2">
-                <div className="w-16 h-16 rounded-[12px] bg-[#EEF2F6] flex items-center justify-center text-blue-600">
-                  <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.imageUrl} alt="Imagem da capa" className="w-full h-40 object-contain rounded-[8px] border border-[#CDD0DA] bg-[#F8FAFC]" />
+              ) : (
+                <div className="w-full h-40 rounded-[8px] border-2 border-dashed border-[#CDD0DA] bg-[#F8FAFC] flex items-center justify-center text-sm text-gray-400 font-poppins">
+                  Sem imagem
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -622,6 +374,7 @@ function VisualizarMecanicaContent() {
         title="Aprovar mecânica"
         subtitle="Atenção: tem certeza que deseja aprovar esta mecânica?"
         showJustificativa={false}
+        confirmText={submitting ? "Aprovando..." : "Confirmar"}
       />
 
       <StatusModal
@@ -634,6 +387,7 @@ function VisualizarMecanicaContent() {
         justificativa={justificativa}
         onJustificativaChange={setJustificativa}
         showJustificativa={true}
+        confirmText={submitting ? "Reprovando..." : "Confirmar"}
       />
     </div>
   );

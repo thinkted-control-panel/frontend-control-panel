@@ -7,30 +7,19 @@ import { CustomTextInput } from "@/components/forms/TextInput";
 import { useForm } from "react-hook-form";
 import { ILogin } from "@/interfaces/ILogin";
 import { CustomButton } from "@/components/forms/CustomButton";
-import { toast } from "react-toastify";
-import { login } from "@/services/LoginService";
 import { useAuth } from "@/contexts/AuthContext";
-import { handleApiError } from "@/utils/handleApiError";
 
 export default function Login() {
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<ILogin>();
   const { setToken } = useAuth();
 
-  const onSubmit = async (data: ILogin) => {
-    try {
-      const token = await login(data);
-      setToken(token);
-      toast.success("Login realizado com sucesso!");
-    } catch (error) {
-      handleApiError(error, "Erro ao realizar login. Verifique suas credenciais.", {
-        setError,
-      });
-    }
+  const onSubmit = async () => {
+    // DEV BYPASS — remove when control_panel_backend is configured
+    setToken("dev-bypass-token");
   };
 
   return (

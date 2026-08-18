@@ -1,9 +1,12 @@
 import { thinklibApi } from "@/config/thinklibApiConfig";
 import {
+  ApprovalStatus,
   IMechanic,
   IMechanicListResponse,
   IMechanicCreatePayload,
   IMechanicUpdatePayload,
+  IMechanicEditRequest,
+  IMechanicEditRequestListResponse,
 } from "@/interfaces/thinklib/IMechanic";
 
 export const getMechanics = async (params: {
@@ -11,21 +14,65 @@ export const getMechanics = async (params: {
   pageSize: number;
   categoryNames?: string[];
   typeNames?: string[];
+  status?: ApprovalStatus;
 }): Promise<IMechanicListResponse> => {
   const qs = new URLSearchParams({
     PageNumber: String(params.pageNumber),
     PageSize: String(params.pageSize),
-    View: "Full",
   });
   params.categoryNames?.forEach((n) => qs.append("CategoryNames", n));
   params.typeNames?.forEach((n) => qs.append("TypeNames", n));
+  if (params.status) qs.append("Status", params.status);
 
   const response = await thinklibApi.get<IMechanicListResponse>(`/api/mechanics?${qs}`);
   return response.data;
 };
 
-export const getMechanicById = async (id: string): Promise<IMechanic> => {
-  const response = await thinklibApi.get<IMechanic>(`/api/mechanics/${id}?View=Full`);
+export const getMechanicById = async (id: string, status?: ApprovalStatus): Promise<IMechanic> => {
+  const qs = new URLSearchParams({ View: "Full" });
+  if (status) qs.append("Status", status);
+  const response = await thinklibApi.get<IMechanic>(`/api/mechanics/${id}?${qs}`);
+  return response.data;
+};
+
+export const reviewMechanic = async (
+  mechanicId: string,
+  status: "Approved" | "Rejected",
+  rejectReason?: string
+): Promise<IMechanic> => {
+  const response = await thinklibApi.post<IMechanic>(`/api/mechanics/${mechanicId}/review`, {
+    status,
+    rejectReason,
+  });
+  return response.data;
+};
+
+export const getMechanicEditRequests = async (params: {
+  pageNumber: number;
+  pageSize: number;
+  status?: ApprovalStatus;
+}): Promise<IMechanicEditRequestListResponse> => {
+  const qs = new URLSearchParams({
+    PageNumber: String(params.pageNumber),
+    PageSize: String(params.pageSize),
+  });
+  if (params.status) qs.append("Status", params.status);
+
+  const response = await thinklibApi.get<IMechanicEditRequestListResponse>(
+    `/api/mechanics/edit-requests?${qs}`
+  );
+  return response.data;
+};
+
+export const reviewMechanicEditRequest = async (
+  editRequestId: string,
+  status: "Approved" | "Rejected",
+  rejectReason?: string
+): Promise<IMechanicEditRequest> => {
+  const response = await thinklibApi.post<IMechanicEditRequest>(
+    `/api/mechanics/edit-requests/${editRequestId}/review`,
+    { status, rejectReason }
+  );
   return response.data;
 };
 

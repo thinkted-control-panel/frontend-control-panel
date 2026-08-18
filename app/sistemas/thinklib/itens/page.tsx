@@ -286,6 +286,11 @@ export default function ItensPage() {
 
       // Mecânicas
       const mechRes = await MechanicService.getMechanics({ pageNumber: 1, pageSize: 50 });
+      const statusMap: Record<string, Mecanica["status"]> = {
+        Approved: "Aprovado",
+        Rejected: "Reprovado",
+        Pending: "Pendente",
+      };
       const fetchedMecs: Mecanica[] = (mechRes.items ?? []).map((m) => ({
         id: m.id,
         name: m.name ?? "",
@@ -295,7 +300,7 @@ export default function ItensPage() {
         categoryColor: colorForName(m.categoryName ?? ""),
         tipoName: m.typeName ?? "",
         description: m.description ?? "",
-        status: "Pendente" as const,
+        status: statusMap[m.approvalStatus ?? ""] ?? "Pendente",
         createdAt: fmtDate(m.createdAt),
       }));
       setMecanicas(fetchedMecs);

@@ -10,6 +10,8 @@ export interface IMechanicFile {
   fileType: string;
 }
 
+export type ApprovalStatus = "Pending" | "Approved" | "Rejected";
+
 export interface IMechanic {
   id: string;
   name?: string;
@@ -25,10 +27,42 @@ export interface IMechanic {
   devName?: string;
   createdAt: string;
   updatedAt?: string | null;
+  approvalStatus?: ApprovalStatus;
+  reviewedByName?: string | null;
+  reviewedAt?: string | null;
+  rejectReason?: string | null;
 }
 
 export interface IMechanicListResponse {
   items: IMechanic[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface IMechanicEditRequest {
+  id: string;
+  mechanicId: string;
+  mechanicName: string;
+  createdAt: string;
+  name: string;
+  presentationText: string;
+  description: string;
+  videoUrl: string;
+  unityVersion: string;
+  categoryName: string;
+  typeName: string;
+  requestedByName: string;
+  approvalStatus: ApprovalStatus;
+  reviewedByName?: string | null;
+  reviewedAt?: string | null;
+  rejectReason?: string | null;
+  message?: string | null;
+}
+
+export interface IMechanicEditRequestListResponse {
+  items: IMechanicEditRequest[];
   pageNumber: number;
   pageSize: number;
   totalCount: number;

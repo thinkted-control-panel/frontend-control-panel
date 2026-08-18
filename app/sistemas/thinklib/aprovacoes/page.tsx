@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SearchInput } from "@/components/SearchInput";
 import { GenericTable, type TableColumn } from "@/components/GenericTable";
 import { CircleCheck, CircleMinus, CircleX } from "lucide-react";
+import * as MechanicService from "@/services/thinklib/MechanicService";
+import type { ApprovalStatus } from "@/interfaces/thinklib/IMechanic";
 
 interface ApprovalItem {
   id: string;
@@ -24,126 +26,65 @@ interface EditApprovalItem {
   status: "Pendente" | "Aprovado" | "Reprovado";
 }
 
+function fmtDate(iso: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+  } catch {
+    return iso;
+  }
+}
+
+function toStatusLabel(status?: ApprovalStatus): "Pendente" | "Aprovado" | "Reprovado" {
+  if (status === "Approved") return "Aprovado";
+  if (status === "Rejected") return "Reprovado";
+  return "Pendente";
+}
+
 export default function AprovacoesPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"mecanicas" | "edicao">(
     "mecanicas",
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [mecanicas, setMecanicas] = useState<ApprovalItem[]>([]);
+  const [edicoes, setEdicoes] = useState<EditApprovalItem[]>([]);
 
-  const mockMecanicas: ApprovalItem[] = [
-    {
-      id: "1",
-      name: "Ataque Corpo a Corpo",
-      category: "Plataforma",
-      description: "Mecânica de combate direto...",
-      dateTime: "18/04/2026 20:00:12",
-      status: "Pendente",
-    },
-    {
-      id: "2",
-      name: "Ataque Corpo a Corpo",
-      category: "Point-and-Click",
-      description: "Mecânica de combate direto...",
-      dateTime: "17/04/2026 20:00:12",
-      status: "Pendente",
-    },
-    {
-      id: "3",
-      name: "Ataque Corpo a Corpo",
-      category: "Tower Defense",
-      description: "Mecânica de combate direto...",
-      dateTime: "16/04/2026 20:00:12",
-      status: "Pendente",
-    },
-    {
-      id: "4",
-      name: "Ataque Corpo a Corpo",
-      category: "Tower Defense",
-      description: "Mecânica de combate direto...",
-      dateTime: "15/04/2026 20:00:12",
-      status: "Pendente",
-    },
-    {
-      id: "5",
-      name: "Ataque Corpo a Corpo",
-      category: "Plataforma",
-      description: "Mecânica de combate direto...",
-      dateTime: "14/04/2026 20:00:12",
-      status: "Aprovado",
-    },
-    {
-      id: "6",
-      name: "Ataque Corpo a Corpo",
-      category: "Point-and-Click",
-      description: "Mecânica de combate direto...",
-      dateTime: "14/04/2026 20:00:12",
-      status: "Aprovado",
-    },
-    {
-      id: "7",
-      name: "Ataque Corpo a Corpo",
-      category: "Plataforma",
-      description: "Mecânica de combate direto...",
-      dateTime: "13/04/2026 20:00:12",
-      status: "Reprovado",
-    },
-    {
-      id: "8",
-      name: "Ataque Corpo a Corpo",
-      category: "Plataforma",
-      description: "Mecânica de combate direto...",
-      dateTime: "12/02/2026 20:00:12",
-      status: "Reprovado",
-    },
-    {
-      id: "9",
-      name: "Ataque Corpo a Corpo",
-      category: "Plataforma",
-      description: "Mecânica de combate direto...",
-      dateTime: "12/02/2026 20:00:12",
-      status: "Pendente",
-    },
-  ];
+  const loadMecanicas = useCallback(async () => {
+    const res = await MechanicService.getMechanics({ pageNumber: 1, pageSize: 100 });
+    const items: ApprovalItem[] = (res.items ?? []).map((m) => ({
+      id: m.id,
+      name: m.name ?? "",
+      category: m.categoryName ?? "",
+      description: m.description ?? "",
+      dateTime: fmtDate(m.createdAt),
+      status: toStatusLabel(m.approvalStatus),
+    }));
+    items.sort((a, b) => (a.dateTime < b.dateTime ? 1 : -1));
+    setMecanicas(items);
+  }, []);
 
-  const mockEdicoes: EditApprovalItem[] = [
-    {
-      id: "e1",
-      name: "Ataque Duplo",
-      user: "Carlos M.",
-      category: "Plataforma",
-      description: "Mecânica de ataque consecutivo...",
-      dateTime: "18/04/2026 21:10:00",
-      status: "Pendente",
-    },
-    {
-      id: "e2",
-      name: "Salto Duplo",
-      user: "Ana B.",
-      category: "Plataforma",
-      description: "Permite pular uma segunda vez no ar...",
-      dateTime: "17/04/2026 15:30:12",
-      status: "Pendente",
-    },
-    {
-      id: "e3",
-      name: "Dash Lateral",
-      user: "Bruno K.",
-      category: "Tower Defense",
-      description: "Esquiva rápida para as laterais...",
-      dateTime: "15/04/2026 09:20:45",
-      status: "Aprovado",
-    },
-    {
-      id: "e4",
-      name: "Defesa de Escudo",
-      user: "David L.",
-      category: "Point-and-Click",
-      description: "Bloqueia ataques frontais...",
-      dateTime: "12/04/2026 14:15:22",
-      status: "Reprovado",
-    },
-  ];
+  const loadEdicoes = useCallback(async () => {
+    const res = await MechanicService.getMechanicEditRequests({ pageNumber: 1, pageSize: 100 });
+    const items: EditApprovalItem[] = (res.items ?? []).map((e) => ({
+      id: e.id,
+      name: e.name,
+      user: e.requestedByName,
+      category: e.categoryName,
+      description: e.description,
+      dateTime: fmtDate(e.createdAt),
+      status: toStatusLabel(e.approvalStatus),
+    }));
+    setEdicoes(items);
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    Promise.all([loadMecanicas(), loadEdicoes()])
+      .catch((err) => console.error("[ThinkLib] Failed to load approvals:", err))
+      .finally(() => setIsLoading(false));
+  }, [loadMecanicas, loadEdicoes]);
 
   const getCategoryDot = (category: string) => {
     let dotColor = "bg-gray-400";
@@ -346,19 +287,21 @@ export default function AprovacoesPage() {
       <div className="mt-2">
         {activeTab === "mecanicas" ? (
           <GenericTable
-            data={mockMecanicas}
+            data={mecanicas}
             columns={mecanicasColumns}
             searchTerm={searchTerm}
             itemsPerPage={11}
             onRowClick={handleRowClick}
+            isLoading={isLoading}
           />
         ) : (
           <GenericTable
-            data={mockEdicoes}
+            data={edicoes}
             columns={edicoesColumns}
             searchTerm={searchTerm}
             itemsPerPage={11}
             onRowClick={handleRowClick}
+            isLoading={isLoading}
           />
         )}
       </div>
