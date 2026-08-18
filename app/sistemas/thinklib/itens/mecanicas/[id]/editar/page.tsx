@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { X, Plus, ClipboardPaste, ImageIcon, Trash2 } from "lucide-react";
+import { X, Plus, ClipboardPaste, ImageIcon, Trash2, CircleCheck } from "lucide-react";
+import { toast } from "react-toastify";
 import * as CategoryService from "@/services/thinklib/CategoryService";
 import * as MechanicTypeService from "@/services/thinklib/MechanicTypeService";
 import * as MechanicService from "@/services/thinklib/MechanicService";
@@ -216,6 +217,7 @@ export default function EditarMecanicaPage() {
 
     if (!name.trim() || !categoryId || !tipoId || !unityVersion) {
       setError("Preencha todos os campos obrigatórios.");
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -237,10 +239,20 @@ export default function EditarMecanicaPage() {
         files: [],
       });
 
+      toast.success(
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#16A34A] text-sm font-poppins">Sucesso</span>
+          <span className="text-xs text-[#5D657F] font-poppins">Alterações enviadas para aprovação.</span>
+        </div>,
+        {
+          icon: <CircleCheck size={18} className="text-[#16A34A]" />,
+          style: { backgroundColor: "#F0FDF4", border: "1px solid #DCFCE7", borderRadius: "8px" },
+        }
+      );
       router.push("/sistemas/thinklib/itens");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao salvar mecânica.";
-      setError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

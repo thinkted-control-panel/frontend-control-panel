@@ -53,7 +53,10 @@ export default function AprovacoesPage() {
 
   const loadMecanicas = useCallback(async () => {
     const res = await MechanicService.getMechanics({ pageNumber: 1, pageSize: 100 });
-    const items: ApprovalItem[] = (res.items ?? []).map((m) => ({
+    const fullMechanics = await Promise.all(
+      (res.items ?? []).map((m) => MechanicService.getMechanicById(m.id))
+    );
+    const items: ApprovalItem[] = fullMechanics.map((m) => ({
       id: m.id,
       name: m.name ?? "",
       category: m.categoryName ?? "",

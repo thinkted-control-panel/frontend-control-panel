@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { toast } from "react-toastify";
 import * as CategoryService from "@/services/thinklib/CategoryService";
 import * as MechanicTypeService from "@/services/thinklib/MechanicTypeService";
 import * as MechanicService from "@/services/thinklib/MechanicService";
@@ -291,7 +292,10 @@ export default function ItensPage() {
         Rejected: "Reprovado",
         Pending: "Pendente",
       };
-      const fetchedMecs: Mecanica[] = (mechRes.items ?? []).map((m) => ({
+      const fullMechanics = await Promise.all(
+        (mechRes.items ?? []).map((m) => MechanicService.getMechanicById(m.id))
+      );
+      const fetchedMecs: Mecanica[] = fullMechanics.map((m) => ({
         id: m.id,
         name: m.name ?? "",
         user: m.devName ?? "",
@@ -342,8 +346,10 @@ export default function ItensPage() {
         { id: res.id, name: formCatName.trim(), color: formCatColor, createdAt: nowString() },
       ]);
       setCreateCatOpen(false);
+      toast.success("Categoria criada com sucesso.");
     } catch (err) {
       console.error("[ThinkLib] Create category failed:", err);
+      toast.error("Não foi possível criar a categoria.");
     } finally {
       setCatSubmitting(false);
     }
@@ -358,8 +364,10 @@ export default function ItensPage() {
         prev.map((c) => c.id === editCat.id ? { ...c, name: formCatName.trim(), color: formCatColor } : c)
       );
       setEditCat(null);
+      toast.success("Categoria atualizada com sucesso.");
     } catch (err) {
       console.error("[ThinkLib] Update category failed:", err);
+      toast.error("Não foi possível atualizar a categoria.");
     } finally {
       setCatSubmitting(false);
     }
@@ -372,8 +380,10 @@ export default function ItensPage() {
       await CategoryService.deleteCategory(deleteCat.id);
       setCategorias((prev) => prev.filter((c) => c.id !== deleteCat.id));
       setDeleteCat(null);
+      toast.success("Categoria excluída.");
     } catch (err) {
       console.error("[ThinkLib] Delete category failed:", err);
+      toast.error("Não foi possível excluir a categoria.");
     } finally {
       setCatSubmitting(false);
     }
@@ -410,8 +420,10 @@ export default function ItensPage() {
         },
       ]);
       setCreateTipoOpen(false);
+      toast.success("Tipo de mecânica criado com sucesso.");
     } catch (err) {
       console.error("[ThinkLib] Create type failed:", err);
+      toast.error("Não foi possível criar o tipo de mecânica.");
     } finally {
       setTipoSubmitting(false);
     }
@@ -431,8 +443,10 @@ export default function ItensPage() {
         )
       );
       setEditTipo(null);
+      toast.success("Tipo de mecânica atualizado com sucesso.");
     } catch (err) {
       console.error("[ThinkLib] Update type failed:", err);
+      toast.error("Não foi possível atualizar o tipo de mecânica.");
     } finally {
       setTipoSubmitting(false);
     }
@@ -445,8 +459,10 @@ export default function ItensPage() {
       await MechanicTypeService.deleteType(deleteTipo.categoryId, deleteTipo.id);
       setTipos((prev) => prev.filter((t) => t.id !== deleteTipo.id));
       setDeleteTipo(null);
+      toast.success("Tipo de mecânica excluído.");
     } catch (err) {
       console.error("[ThinkLib] Delete type failed:", err);
+      toast.error("Não foi possível excluir o tipo de mecânica.");
     } finally {
       setTipoSubmitting(false);
     }
