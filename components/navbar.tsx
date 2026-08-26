@@ -8,7 +8,9 @@ import avatarMock from "../imports/avatar-mock.svg";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function TopBar() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const displayName = user?.name ?? user?.username ?? "Usuario";
+  const secondaryInfo = user?.email ?? user?.username ?? "";
 
   return (
     <header className="w-full h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-6">
@@ -57,12 +59,14 @@ export default function TopBar() {
 
           <div className="flex flex-col items-start text-sm leading-tight">
             <span className="font-medium text-[#11204F]">
-              Marcela P.
+              {displayName}
             </span>
 
-            <span className="text-xs text-[#5D657F]">
-              Super admin
-            </span>
+            {secondaryInfo && (
+              <span className="text-xs text-[#5D657F]">
+                {secondaryInfo}
+              </span>
+            )}
           </div>
 
           <ChevronDown size={16} className="text-gray-500" />
