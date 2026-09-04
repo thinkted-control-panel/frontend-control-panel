@@ -1,37 +1,23 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+
+import { CustomButton } from "@/components/forms/CustomButton";
 import logo from "../../imports/logo.svg";
 import puzzleIllustration from "../../imports/login-illustration.svg";
-import Image from "next/image";
-import { CustomTextInput } from "@/components/forms/TextInput";
-import { useForm } from "react-hook-form";
-import { ILogin } from "@/interfaces/ILogin";
-import { CustomButton } from "@/components/forms/CustomButton";
-import { toast } from "react-toastify";
-import { login } from "@/services/LoginService";
-import { useAuth } from "@/contexts/AuthContext";
-import { handleApiError } from "@/utils/handleApiError";
 
 export default function Login() {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<ILogin>();
-  const { setToken } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: ILogin) => {
-    try {
-      const token = await login(data);
-      setToken(token);
-      toast.success("Login realizado com sucesso!");
-    } catch (error) {
-      // Erros de validação (400) caem nos inputs; o resto vai para o toast.
-      handleApiError(error, "Erro ao realizar login. Verifique suas credenciais.", {
-        setError,
-      });
-    }
+  const handleLogin = async () => {
+    setIsSubmitting(true);
+    const callbackUrl =
+      new URLSearchParams(window.location.search).get("callbackUrl") ??
+      "/dashboard";
+
+    await signIn("keycloak", { redirectTo: callbackUrl });
   };
 
   return (
@@ -44,34 +30,22 @@ export default function Login() {
           </h1>
           <h5>Seja bem-vindo</h5>
         </div>
-        <form className="flex flex-col gap-3 w-full max-w-md items-center">
-          <CustomTextInput
-            {...register("email")}
-            type="email"
-            label="Email"
-            placeholder="Insira seu e-mail"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-          />
-          <CustomTextInput
-            {...register("password")}
-            label="Senha"
-            placeholder="Insira sua senha"
-            type="password"
-            error={!!errors.password}
-            helperText={errors.password?.message}
-          />
 
-          <CustomButton onClick={handleSubmit(onSubmit)} isLoading={isSubmitting}>
+        <div className="flex flex-col gap-3 w-full max-w-md items-center">
+          <CustomButton
+            type="button"
+            onClick={handleLogin}
+            isLoading={isSubmitting}
+          >
             Entrar
           </CustomButton>
-        </form>
+        </div>
       </div>
 
       <div className="flex w-1/2 h-full">
         <Image
           src={puzzleIllustration}
-          alt="Ilustração Puzzle"
+          alt="Ilustracao Puzzle"
           className="w-full h-full object-contain"
         />
       </div>
